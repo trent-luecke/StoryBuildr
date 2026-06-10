@@ -14,7 +14,7 @@ const mockResult: AuditResult = {
 
 test('renders channel name', () => {
   render(<ChannelCard result={mockResult} />)
-  expect(screen.getByText('instagram')).toBeInTheDocument()
+  expect(screen.getByText('Instagram')).toBeInTheDocument()
 })
 
 test('renders narrative text', () => {

@@ -15,7 +15,7 @@ export function ChannelCard({ result }: ChannelCardProps) {
       <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-xs font-bold text-[#444444] uppercase tracking-wide">
-            {result.channel}
+            {CHANNEL_LABELS[result.channel] ?? result.channel}
           </p>
         </div>
         <ScoreBar score={result.score} />
