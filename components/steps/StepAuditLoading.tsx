@@ -16,7 +16,8 @@ export function StepAuditLoading() {
   const { state, dispatch } = useWizard()
   const [msgIndex, setMsgIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
-  const startedRef = useRef(false)
+  const [attempt, setAttempt] = useState(0)
+  const startedAttempt = useRef(-1)
 
   // Cycle loading messages (safe to re-run on remount)
   useEffect(() => {
@@ -26,10 +27,10 @@ export function StepAuditLoading() {
     return () => clearInterval(interval)
   }, [])
 
-  // Fire audit exactly once (ref guard prevents double-fire under React 19 StrictMode)
+  // Fire audit once per attempt (ref guard prevents double-fire under React 19 StrictMode)
   useEffect(() => {
-    if (startedRef.current) return
-    startedRef.current = true
+    if (startedAttempt.current === attempt) return // already started this attempt
+    startedAttempt.current = attempt
 
     async function runAudit() {
       try {
@@ -84,7 +85,7 @@ export function StepAuditLoading() {
     }
 
     runAudit()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [attempt]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) {
     return (
@@ -92,14 +93,7 @@ export function StepAuditLoading() {
         <p className="text-sm font-medium text-[#1E212E] mb-2">Something went wrong</p>
         <p className="text-xs text-[#444444]/70 mb-6 max-w-xs">{error}</p>
         <button
-          onClick={() => {
-            setError(null)
-            startedRef.current = false
-            // Re-trigger the effect by forcing a re-render via the error state clear above.
-            // Because startedRef is reset, the effect guard will allow it to fire again.
-            // We use a tiny workaround: dispatch a no-op step to the same step to remount.
-            dispatch({ type: 'SET_STEP', step: 4 })
-          }}
+          onClick={() => { setError(null); setAttempt((a) => a + 1) }}
           className="bg-[#81A1D3] text-[#1E212E] font-extrabold px-6 py-2.5 rounded-lg text-sm tracking-wide hover:bg-[#6b8fbf] transition-colors"
         >
           Try again
