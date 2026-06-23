@@ -56,9 +56,18 @@ export function StepYourPlan() {
         try {
           const parsed = JSON.parse(raw)
           if (parsed?.stories) {
-            const plan = { stories: parsed.stories as Story[] }
+            // Defensive: the model occasionally emits a placeholder/junk story
+            // (e.g. {title:'facebook', whySelected:'placeholder', channels:{}}).
+            // Keep only well-formed stories that have real copy for at least one channel.
+            const validStories = (parsed.stories as Story[]).filter(
+              (s) =>
+                s?.title &&
+                s.channels &&
+                Object.values(s.channels).some((c) => c?.copy?.trim())
+            )
+            const plan = { stories: validStories }
             dispatch({ type: 'SET_STORY_PLAN', data: plan })
-            setStories(parsed.stories)
+            setStories(validStories)
             setLoading(false)
             return
           }
