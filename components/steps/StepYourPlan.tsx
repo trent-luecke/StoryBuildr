@@ -7,7 +7,7 @@ import { PdfCallout } from '@/components/ui/PdfCallout'
 import { Story } from '@/lib/types'
 
 export function StepYourPlan() {
-  const { state, dispatch } = useWizard()
+  const { state, dispatch, previewMode } = useWizard()
   const [loading, setLoading] = useState(!state.storyPlan)
   const [stories, setStories] = useState<Story[]>(state.storyPlan?.stories ?? [])
   const [downloading, setDownloading] = useState(false)
@@ -20,6 +20,7 @@ export function StepYourPlan() {
   // Fire generation once per attempt (ref guard prevents double-fire under React 19 StrictMode).
   // Short-circuit: if storyPlan already in state, nothing to do.
   useEffect(() => {
+    if (previewMode) return // preview harness: show loading spinner, never hit the API
     if (state.storyPlan) return            // already generated; nothing to do
     if (startedAttempt.current === attempt) return
     startedAttempt.current = attempt
