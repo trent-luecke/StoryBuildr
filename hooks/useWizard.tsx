@@ -40,11 +40,24 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 const WizardContext = createContext<{
   state: WizardState
   dispatch: React.Dispatch<WizardAction>
+  previewMode: boolean
 } | null>(null)
 
-export function WizardProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(wizardReducer, initialState)
-  return <WizardContext.Provider value={{ state, dispatch }}>{children}</WizardContext.Provider>
+export function WizardProvider({
+  children,
+  initialState: seed,
+  previewMode = false,
+}: {
+  children: ReactNode
+  initialState?: Partial<WizardState>
+  previewMode?: boolean
+}) {
+  const [state, dispatch] = useReducer(wizardReducer, { ...initialState, ...seed })
+  return (
+    <WizardContext.Provider value={{ state, dispatch, previewMode }}>
+      {children}
+    </WizardContext.Provider>
+  )
 }
 
 export function useWizard() {

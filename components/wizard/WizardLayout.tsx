@@ -10,7 +10,7 @@ import { StepAuditResults } from '@/components/steps/StepAuditResults'
 import { StepStoryMine } from '@/components/steps/StepStoryMine'
 import { StepYourPlan } from '@/components/steps/StepYourPlan'
 
-function WizardContent() {
+export function WizardContent() {
   const { state } = useWizard()
 
   const steps = {
