@@ -13,7 +13,7 @@ const MESSAGES = [
 ]
 
 export function StepAuditLoading() {
-  const { state, dispatch } = useWizard()
+  const { state, dispatch, previewMode } = useWizard()
   const [msgIndex, setMsgIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -29,6 +29,7 @@ export function StepAuditLoading() {
 
   // Fire audit once per attempt (ref guard prevents double-fire under React 19 StrictMode)
   useEffect(() => {
+    if (previewMode) return // preview harness: show spinner, never hit the API
     if (startedAttempt.current === attempt) return // already started this attempt
     startedAttempt.current = attempt
 

@@ -40,11 +40,26 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 const WizardContext = createContext<{
   state: WizardState
   dispatch: React.Dispatch<WizardAction>
+  previewMode: boolean
 } | null>(null)
 
-export function WizardProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(wizardReducer, initialState)
-  return <WizardContext.Provider value={{ state, dispatch }}>{children}</WizardContext.Provider>
+export function WizardProvider({
+  children,
+  initialState: seed,
+  previewMode = false,
+}: {
+  children: ReactNode
+  initialState?: Partial<WizardState>
+  previewMode?: boolean
+}) {
+  // Top-level replace, not a deep merge: a seed field wholly overrides the base
+  // field (seeds pass whole top-level objects, never partial nested ones).
+  const [state, dispatch] = useReducer(wizardReducer, { ...initialState, ...seed })
+  return (
+    <WizardContext.Provider value={{ state, dispatch, previewMode }}>
+      {children}
+    </WizardContext.Provider>
+  )
 }
 
 export function useWizard() {
