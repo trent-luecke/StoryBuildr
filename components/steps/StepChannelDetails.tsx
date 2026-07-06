@@ -58,7 +58,7 @@ export function StepChannelDetails() {
     if (!pf) return {}
     const out: Partial<Record<Channel, FallbackChannelData>> = {}
     for (const [c, r] of Object.entries(pf) as [Channel, PreflightStatus][]) {
-      if (r.status === 'fallback') out[c as Channel] = r.data
+      if (r.status === 'fallback') out[c] = r.data
     }
     return out
   })

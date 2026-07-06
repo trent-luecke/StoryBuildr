@@ -47,4 +47,13 @@ describe('previewMode suppresses network calls', () => {
     )
     expect(global.fetch).toHaveBeenCalledWith('/api/audit', expect.anything())
   })
+
+  it('StepYourPlan DOES fetch when previewMode is off and no storyPlan', () => {
+    render(
+      <WizardProvider initialState={baseSeed}>
+        <StepYourPlan />
+      </WizardProvider>
+    )
+    expect(global.fetch).toHaveBeenCalledWith('/api/generate', expect.anything())
+  })
 })

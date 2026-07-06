@@ -52,6 +52,8 @@ export function WizardProvider({
   initialState?: Partial<WizardState>
   previewMode?: boolean
 }) {
+  // Top-level replace, not a deep merge: a seed field wholly overrides the base
+  // field (seeds pass whole top-level objects, never partial nested ones).
   const [state, dispatch] = useReducer(wizardReducer, { ...initialState, ...seed })
   return (
     <WizardContext.Provider value={{ state, dispatch, previewMode }}>
