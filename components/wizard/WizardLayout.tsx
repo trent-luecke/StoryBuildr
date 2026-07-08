@@ -10,7 +10,7 @@ import { StepAuditResults } from '@/components/steps/StepAuditResults'
 import { StepStoryMine } from '@/components/steps/StepStoryMine'
 import { StepYourPlan } from '@/components/steps/StepYourPlan'
 
-function WizardContent() {
+export function WizardContent() {
   const { state } = useWizard()
 
   const steps = {
@@ -26,7 +26,7 @@ function WizardContent() {
   return (
     <div className="min-h-screen flex">
       <WizardSidebar currentStep={state.currentStep} />
-      <main className="flex-1 bg-white overflow-auto">
+      <main className="flex-1 bg-slate-50 overflow-auto flex justify-center items-start">
         {steps[state.currentStep]}
       </main>
     </div>

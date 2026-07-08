@@ -12,11 +12,22 @@ const storyChannelSchema = z.object({
   suggestedPostDate: z.string(),
 })
 
+// Explicit per-channel keys (not z.record): AI SDK structured output won't
+// populate an additionalProperties-only object, so the model returns `{}`.
+// Listing each channel as optional gives it concrete properties to fill.
+const storyChannelsSchema = z.object({
+  instagram: storyChannelSchema.optional(),
+  facebook: storyChannelSchema.optional(),
+  linkedin: storyChannelSchema.optional(),
+  website: storyChannelSchema.optional(),
+  email: storyChannelSchema.optional(),
+})
+
 const storySchema = z.object({
   title: z.string(),
   type: z.string(),
   whySelected: z.string(),
-  channels: z.record(z.string(), storyChannelSchema),
+  channels: storyChannelsSchema,
 })
 
 const generateResponseSchema = z.object({

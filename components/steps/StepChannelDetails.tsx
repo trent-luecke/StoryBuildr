@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useWizard } from '@/hooks/useWizard'
+import { STEP_CARD } from '@/components/wizard/stepLayout'
 import { FallbackChannelForm } from '@/components/ui/FallbackChannelForm'
 import { Channel, ChannelDetailsData, PreflightStatus, FallbackChannelData } from '@/lib/types'
 
@@ -14,6 +15,21 @@ const CHANNEL_LABELS: Record<Channel, string> = {
 
 type ChannelState = 'idle' | 'checking' | 'pass' | 'unreachable' | 'blocked' | 'skipped' | 'fallback-done'
 
+function seededFormValues(cd: ChannelDetailsData | null): Record<string, string> {
+  if (!cd) return {}
+  const v: Record<string, string> = {}
+  if (cd.instagram) v.instagram = cd.instagram.url
+  if (cd.facebook) v.facebook = cd.facebook.url
+  if (cd.linkedin) v.linkedin = cd.linkedin.url
+  if (cd.website) v.website = cd.website.url
+  if (cd.email) {
+    v['email-platform'] = cd.email.platform
+    v['email-subscribers'] = String(cd.email.subscriberCount)
+    v['email-frequency'] = cd.email.sendFrequency
+  }
+  return v
+}
+
 export function StepChannelDetails() {
   const { state, dispatch } = useWizard()
   const channels = state.businessInfo?.channels ?? []
@@ -21,9 +37,32 @@ export function StepChannelDetails() {
   const hasWebsite = channels.includes('website')
   const hasEmail = channels.includes('email')
 
-  const { register, getValues } = useForm<Record<string, string>>()
-  const [channelStates, setChannelStates] = useState<Partial<Record<Channel, ChannelState>>>({})
-  const [fallbackData, setFallbackData] = useState<Partial<Record<Channel, FallbackChannelData>>>({})
+  const { register, getValues } = useForm<Record<string, string>>({
+    defaultValues: seededFormValues(state.channelDetails),
+  })
+  const [channelStates, setChannelStates] = useState<Partial<Record<Channel, ChannelState>>>(() => {
+    const pf = state.preflightResults
+    if (!pf) return {}
+    const out: Partial<Record<Channel, ChannelState>> = {}
+    for (const [c, r] of Object.entries(pf) as [Channel, PreflightStatus][]) {
+      if (c === 'email') continue // email has no URL row / badge
+      if (r.status === 'pass') out[c] = 'pass'
+      else if (r.status === 'fallback') out[c] = 'fallback-done'
+      else if (r.status === 'skipped') out[c] = 'skipped'
+      else if (r.status === 'unreachable') out[c] = 'unreachable'
+      else if (r.status === 'blocked') out[c] = 'blocked'
+    }
+    return out
+  })
+  const [fallbackData, setFallbackData] = useState<Partial<Record<Channel, FallbackChannelData>>>(() => {
+    const pf = state.preflightResults
+    if (!pf) return {}
+    const out: Partial<Record<Channel, FallbackChannelData>> = {}
+    for (const [c, r] of Object.entries(pf) as [Channel, PreflightStatus][]) {
+      if (r.status === 'fallback') out[c] = r.data
+    }
+    return out
+  })
   const [isChecking, setIsChecking] = useState(false)
 
   function setChannelState(channel: Channel, s: ChannelState) {
@@ -108,7 +147,7 @@ export function StepChannelDetails() {
   const anyChecked = Object.keys(channelStates).length > 0
 
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className={STEP_CARD}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Step 3</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">Your channel details</h2>
       <p className="text-sm text-[#444444] mb-6">We'll use these to audit your current content.</p>

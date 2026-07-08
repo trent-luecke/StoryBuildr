@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useWizard } from '@/hooks/useWizard'
+import { STEP_COLUMN } from '@/components/wizard/stepLayout'
 import { StoryCard } from '@/components/plan/StoryCard'
 import { PdfCallout } from '@/components/ui/PdfCallout'
 import { Story } from '@/lib/types'
 
 export function StepYourPlan() {
-  const { state, dispatch } = useWizard()
+  const { state, dispatch, previewMode } = useWizard()
   const [loading, setLoading] = useState(!state.storyPlan)
   const [stories, setStories] = useState<Story[]>(state.storyPlan?.stories ?? [])
   const [downloading, setDownloading] = useState(false)
@@ -20,6 +21,7 @@ export function StepYourPlan() {
   // Fire generation once per attempt (ref guard prevents double-fire under React 19 StrictMode).
   // Short-circuit: if storyPlan already in state, nothing to do.
   useEffect(() => {
+    if (previewMode) return // preview harness: show loading spinner, never hit the API
     if (state.storyPlan) return            // already generated; nothing to do
     if (startedAttempt.current === attempt) return
     startedAttempt.current = attempt
@@ -56,9 +58,18 @@ export function StepYourPlan() {
         try {
           const parsed = JSON.parse(raw)
           if (parsed?.stories) {
-            const plan = { stories: parsed.stories as Story[] }
+            // Defensive: the model occasionally emits a placeholder/junk story
+            // (e.g. {title:'facebook', whySelected:'placeholder', channels:{}}).
+            // Keep only well-formed stories that have real copy for at least one channel.
+            const validStories = (parsed.stories as Story[]).filter(
+              (s) =>
+                s?.title &&
+                s.channels &&
+                Object.values(s.channels).some((c) => c?.copy?.trim())
+            )
+            const plan = { stories: validStories }
             dispatch({ type: 'SET_STORY_PLAN', data: plan })
-            setStories(parsed.stories)
+            setStories(validStories)
             setLoading(false)
             return
           }
@@ -125,7 +136,7 @@ export function StepYourPlan() {
   }
 
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className={STEP_COLUMN}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Your Content Plan</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">30 days of stories, built from yours</h2>
       <p className="text-sm text-[#444444] mb-5">
