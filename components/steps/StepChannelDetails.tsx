@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useWizard } from '@/hooks/useWizard'
+import { STEP_CARD } from '@/components/wizard/stepLayout'
 import { FallbackChannelForm } from '@/components/ui/FallbackChannelForm'
 import { Channel, ChannelDetailsData, PreflightStatus, FallbackChannelData } from '@/lib/types'
 
@@ -146,7 +147,7 @@ export function StepChannelDetails() {
   const anyChecked = Object.keys(channelStates).length > 0
 
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className={STEP_CARD}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Step 3</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">Your channel details</h2>
       <p className="text-sm text-[#444444] mb-6">We'll use these to audit your current content.</p>

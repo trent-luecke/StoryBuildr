@@ -26,7 +26,7 @@ export function WizardContent() {
   return (
     <div className="min-h-screen flex">
       <WizardSidebar currentStep={state.currentStep} />
-      <main className="flex-1 bg-white overflow-auto">
+      <main className="flex-1 bg-slate-50 overflow-auto flex justify-center items-start">
         {steps[state.currentStep]}
       </main>
     </div>

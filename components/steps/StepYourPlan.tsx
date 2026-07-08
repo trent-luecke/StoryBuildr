@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useWizard } from '@/hooks/useWizard'
+import { STEP_COLUMN } from '@/components/wizard/stepLayout'
 import { StoryCard } from '@/components/plan/StoryCard'
 import { PdfCallout } from '@/components/ui/PdfCallout'
 import { Story } from '@/lib/types'
@@ -135,7 +136,7 @@ export function StepYourPlan() {
   }
 
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className={STEP_COLUMN}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Your Content Plan</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">30 days of stories, built from yours</h2>
       <p className="text-sm text-[#444444] mb-5">

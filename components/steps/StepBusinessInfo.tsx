@@ -4,6 +4,7 @@ import { useForm, Controller, Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useWizard } from '@/hooks/useWizard'
+import { STEP_CARD } from '@/components/wizard/stepLayout'
 import { ChipSelect } from '@/components/ui/ChipSelect'
 import { BusinessInfo, Channel } from '@/lib/types'
 
@@ -44,7 +45,7 @@ export function StepBusinessInfo() {
   }
 
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className={STEP_CARD}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Step 2</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">Tell us about your gym</h2>
       <p className="text-sm text-[#444444] mb-6">This helps us tailor your audit and content plan.</p>

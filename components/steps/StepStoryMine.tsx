@@ -3,13 +3,14 @@
 
 import { useState } from 'react'
 import { useWizard } from '@/hooks/useWizard'
+import { STEP_CARD } from '@/components/wizard/stepLayout'
 
 const QUESTIONS = [
   'Describe a member win from the last 30 days — what changed for them?',
   'What does a typical morning look like at your gym? Walk us through it.',
-  'Tell us about a mistake you made as an owner and what you learned.',
   'Why did you start this gym — what\'s the real reason, not the elevator pitch?',
   'Who is your "typical" member, and what were they afraid of before they joined?',
+  'Think of a member\'s very first session. What happened that made them realize they belonged here?',
   'What does your gym do that most gyms don\'t?',
   'Describe your coaching philosophy in one or two sentences.',
   'What\'s a moment in the last 6 months that made you proud?',
@@ -48,7 +49,7 @@ export function StepStoryMine() {
   const progress = ((currentQ) / QUESTIONS.length) * 100
 
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className={STEP_CARD}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Story Mine</p>
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 h-1 bg-gray-100 rounded-full">

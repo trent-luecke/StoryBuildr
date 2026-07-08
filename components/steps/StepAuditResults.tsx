@@ -1,6 +1,7 @@
 'use client'
 
 import { useWizard } from '@/hooks/useWizard'
+import { STEP_COLUMN } from '@/components/wizard/stepLayout'
 import { ChannelCard } from '@/components/audit/ChannelCard'
 import { PdfCallout } from '@/components/ui/PdfCallout'
 
@@ -10,7 +11,7 @@ export function StepAuditResults() {
   const gymName = state.businessInfo?.gymName ?? 'your gym'
 
   return (
-    <div className="px-8 py-8 max-w-xl">
+    <div className={STEP_COLUMN}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Audit Results</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">Here's what we found, {gymName}</h2>
       <p className="text-sm text-[#444444] mb-5">You're showing up — but are you telling stories? Here's the breakdown.</p>
