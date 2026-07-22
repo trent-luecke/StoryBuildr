@@ -54,16 +54,32 @@ regardless of tooling).
 
 Inside the Marketing Email List block, **above** the Platform dropdown:
 
-- A Yes/No control for *"Do you use an email marketing platform?"* (two-button toggle,
-  styled like the existing chips). Default unset.
+- A Yes/No control for the question, with an illustrative example:
+  *"Do you use an email marketing platform? (e.g., MailChimp, ConvertKit, HubSpot, etc.)"*
+  Rendered as a two-button toggle styled like the existing chips. Default unset.
 - **Yes** → reveal the existing Platform dropdown; when `Other` is picked, reveal a free-text
   input (mirrors the services "Other" pattern from Business Info — placeholder e.g.
   *"Which platform?"*).
 - **No** → hide the Platform dropdown and Other input entirely. Still show Subscriber count
   and Send frequency.
 - `seededFormValues` extended to seed `usesPlatform`, `platform`, `otherPlatform` from state.
-- No hard validation gate (consistent with the step's current behavior). Unanswered →
-  treated as manual tier downstream.
+
+### 2a. Required-answer gate (email only)
+
+Unlike social/website URLs — where a blank field degrades gracefully to generic
+best-practice advice — the gating answer materially forks the plan's email strategy, so it
+**must be answered** when email is an active channel.
+
+- Enforced as a **targeted check at the proceed step**, not a full form resolver (the step
+  still has no zod resolver, and URLs remain optional by design). When `hasEmail` and
+  `usesPlatform` is still `undefined`, block `runPreflight`/`proceed` and show an inline error
+  by the question, e.g. *"Let us know so we can tailor your email plan."*
+- Because the toggle both drives conditional rendering and gates proceeding, `usesPlatform`
+  is held as controlled state (RHF `watch`/`setValue` or local `useState`) rather than a
+  plain `register`.
+- The platform dropdown and the `Other` text remain **optional** even when the answer is Yes
+  (brand is low signal; graceful fallback to "a dedicated platform"). Only the yes/no is
+  required.
 
 ### 3. Wire email block into the plan route — **the focus**
 
@@ -130,7 +146,9 @@ Channel Details (gating Q + platform)
 
 - Email not an active channel → no email block anywhere (email section already gated on
   `hasEmail`).
-- `usesPlatform` undefined → manual tier (conservative default).
+- `usesPlatform` undefined → cannot occur in the normal flow (required gate, §2a); but
+  `buildEmailContext` still defaults undefined → manual tier defensively (preview seeds,
+  future entry points).
 - `platform === 'Other'` with empty `otherPlatform` → generic "a dedicated platform"; never
   print "Other".
 - Preview `HAPPY_PATH` email object gains `usesPlatform: true` so the preview stays
@@ -142,6 +160,8 @@ Channel Details (gating Q + platform)
   no-platform default. Pure function, no LLM.
 - **Unit:** `StepYourPlan` includes `channelDetails` in the request body (mirrors the
   existing preview-mode-fetch test pattern).
+- **Unit/interaction:** with email active and the gating question unanswered, proceeding is
+  blocked and the inline error shows; answering (Yes or No) unblocks it.
 - **Manual/browser:** via `/preview`, toggle the gating question and confirm the dropdown
   shows/hides; confirm the plan request payload carries `channelDetails`.
 - Note in the review: we are **not** asserting on generated copy text (non-deterministic);
@@ -152,4 +172,5 @@ Channel Details (gating Q + platform)
 - Recommending, comparing, or upselling email tools — explicitly excluded by the calibration
   rule.
 - Per-brand differentiation beyond passing the name through.
-- Any hard validation gate on the email fields (the step has none today).
+- Validation on the URL / platform-name / subscriber / frequency fields — these stay
+  optional (generic fallback is fine). Only the gating yes/no is required (§2a).
