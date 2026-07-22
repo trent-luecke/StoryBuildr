@@ -18,7 +18,9 @@ export interface ChannelDetailsData {
   linkedin?: { url: string }
   website?: { url: string }
   email?: {
-    platform: string
+    usesPlatform?: boolean
+    platform?: string
+    otherPlatform?: string
     subscriberCount: number
     sendFrequency: string
   }

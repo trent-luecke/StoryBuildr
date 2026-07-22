@@ -23,7 +23,7 @@ function seededFormValues(cd: ChannelDetailsData | null): Record<string, string>
   if (cd.linkedin) v.linkedin = cd.linkedin.url
   if (cd.website) v.website = cd.website.url
   if (cd.email) {
-    v['email-platform'] = cd.email.platform
+    v['email-platform'] = cd.email.platform ?? ''
     v['email-subscribers'] = String(cd.email.subscriberCount)
     v['email-frequency'] = cd.email.sendFrequency
   }
