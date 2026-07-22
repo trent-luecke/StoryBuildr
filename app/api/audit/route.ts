@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { scrapeChannels } from '@/lib/firecrawl'
 import { GYM_MARKETING_SYSTEM_PROMPT } from '@/lib/prompts/gym-marketing'
 import { Channel, ChannelDetailsData, PreflightStatus, FallbackChannelData } from '@/lib/types'
+import { buildAuditEmailBlock } from '@/lib/email-context'
 
 const auditResultSchema = z.object({
   channel: z.string(),
@@ -56,10 +57,7 @@ Recent posts described: ${fb.recentPosts}`
       }
       if (channel === 'email') {
         const em = body.channelDetails.email
-        return `## email (Self-reported)
-Platform: ${em?.platform ?? 'unknown'}
-Subscribers: ${em?.subscriberCount ?? 'unknown'}
-Send frequency: ${em?.sendFrequency ?? 'unknown'}`
+        return em ? buildAuditEmailBlock(em) : '## email (Self-reported)\nNo details provided'
       }
       const scrapeResult = scraped.find((s) => s.channel === channel)
       if (!scrapeResult || scrapeResult.content === 'scrape_unavailable') {
