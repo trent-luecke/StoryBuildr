@@ -19,7 +19,7 @@ export const HAPPY_PATH: WizardState = {
     instagram: { url: 'https://instagram.com/ironpeakfitness' },
     facebook: { url: 'https://facebook.com/ironpeakfitness' },
     website: { url: 'https://ironpeakfitness.com' },
-    email: { platform: 'Mailchimp', subscriberCount: 340, sendFrequency: 'Weekly' },
+    email: { usesPlatform: true, platform: 'Mailchimp', subscriberCount: 340, sendFrequency: 'Weekly' },
   },
   preflightResults: {
     instagram: { status: 'pass' },
