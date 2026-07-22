@@ -76,6 +76,10 @@ export function StepChannelDetails() {
   }
 
   async function runPreflight() {
+    if (hasEmail && emailUsesPlatform === undefined) {
+      setEmailError('Let us know so we can tailor your email plan.')
+      return
+    }
     setIsChecking(true)
     const vals = getValues()
     const urls: Partial<Record<Channel, string>> = {}
@@ -116,6 +120,10 @@ export function StepChannelDetails() {
   }
 
   function proceed(states: Partial<Record<Channel, ChannelState>>) {
+    if (hasEmail && emailUsesPlatform === undefined) {
+      setEmailError('Let us know so we can tailor your email plan.')
+      return
+    }
     const vals = getValues()
     const channelDetails: ChannelDetailsData = {}
     socialChannels.forEach((c) => {
