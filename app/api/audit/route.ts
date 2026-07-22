@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   const body: {
     channelDetails: ChannelDetailsData
     preflightResults: Partial<Record<Channel, PreflightStatus>>
-    businessInfo: { gymName: string; icp: string; channels: Channel[] }
+    businessInfo: { gymName: string; icp: string; channels: Channel[]; services?: string[]; otherServices?: string }
   } = await request.json()
 
   // Collect URLs for scraping (only channels with preflight status 'pass')
@@ -69,8 +69,16 @@ Send frequency: ${em?.sendFrequency ?? 'unknown'}`
     })
     .join('\n\n')
 
+  // Merge selected services with the free-text "Other" detail for sharper context
+  const servicesParts = (body.businessInfo.services ?? []).filter((s) => s !== 'Other')
+  if (body.businessInfo.otherServices?.trim()) {
+    servicesParts.push(`Other: ${body.businessInfo.otherServices.trim()}`)
+  }
+  const servicesLine = servicesParts.length ? servicesParts.join(', ') : 'Not specified'
+
   const prompt = `
 Gym: ${body.businessInfo.gymName}
+Services offered: ${servicesLine}
 Their ideal member: ${body.businessInfo.icp}
 Active channels: ${body.businessInfo.channels.join(', ')}
 
