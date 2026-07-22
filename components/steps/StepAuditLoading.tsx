@@ -45,6 +45,8 @@ export function StepAuditLoading() {
               gymName: state.businessInfo!.gymName,
               icp: state.businessInfo!.icp,
               channels: state.businessInfo!.channels,
+              services: state.businessInfo!.services,
+              otherServices: state.businessInfo!.otherServices,
             },
           }),
         })

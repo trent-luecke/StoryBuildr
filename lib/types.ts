@@ -7,6 +7,7 @@ export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7
 export interface BusinessInfo {
   gymName: string
   services: string[]
+  otherServices?: string
   icp: string
   channels: Channel[]
 }
@@ -17,7 +18,9 @@ export interface ChannelDetailsData {
   linkedin?: { url: string }
   website?: { url: string }
   email?: {
-    platform: string
+    usesPlatform?: boolean
+    platform?: string
+    otherPlatform?: string
     subscriberCount: number
     sendFrequency: string
   }

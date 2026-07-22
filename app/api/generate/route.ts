@@ -4,7 +4,8 @@ import { anthropic } from '@ai-sdk/anthropic'
 import { streamObject } from 'ai'
 import { z } from 'zod'
 import { GYM_MARKETING_SYSTEM_PROMPT } from '@/lib/prompts/gym-marketing'
-import { AuditResult, Channel } from '@/lib/types'
+import { AuditResult, Channel, ChannelDetailsData } from '@/lib/types'
+import { buildEmailContext } from '@/lib/email-context'
 
 const storyChannelSchema = z.object({
   copy: z.string(),
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
     businessInfo: { gymName: string; channels: Channel[]; services: string[]; icp: string }
     auditResults: AuditResult[]
     storyMineAnswers: Partial<Record<number, string>>
+    channelDetails?: ChannelDetailsData
   } = await request.json()
 
   const answersText = Object.entries(body.storyMineAnswers)
@@ -49,6 +51,11 @@ export async function POST(request: NextRequest) {
   const auditSummary = body.auditResults
     .map((r) => `${r.channel}: score ${r.score ?? 'self-reported'} — opportunities: ${r.opportunities.join(', ')}`)
     .join('\n')
+
+  const emailContextBlock =
+    body.businessInfo.channels.includes('email') && body.channelDetails?.email
+      ? '\n\n' + buildEmailContext(body.channelDetails.email)
+      : ''
 
   const prompt = `
 Gym: ${body.businessInfo.gymName}
@@ -61,6 +68,7 @@ ${auditSummary}
 
 ## Owner Interview Answers
 ${answersText}
+${emailContextBlock}
 
 Based on the interview answers and audit findings, select the 4 most compelling stories and produce a 30-day content plan.
 

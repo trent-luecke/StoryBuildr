@@ -42,3 +42,6 @@ next-env.d.ts
 
 # superpowers
 .superpowers/
+
+# local demo/marketing assets (screenshots, reel, deck, report)
+walkthrough/

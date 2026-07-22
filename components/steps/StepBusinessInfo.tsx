@@ -11,8 +11,17 @@ import { BusinessInfo, Channel } from '@/lib/types'
 const schema = z.object({
   gymName: z.string().min(1, 'Required'),
   services: z.array(z.string()).min(1, 'Select at least one'),
+  otherServices: z.string().optional(),
   icp: z.string().min(1, 'Required'),
   channels: z.array(z.string()).min(1, 'Select at least one channel') as z.ZodType<Channel[]>,
+}).superRefine((data, ctx) => {
+  if (data.services.includes('Other') && !data.otherServices?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['otherServices'],
+      message: 'Tell us which other services you offer.',
+    })
+  }
 })
 
 const SERVICE_OPTIONS = [
@@ -34,13 +43,16 @@ const CHANNEL_OPTIONS = [
 
 export function StepBusinessInfo() {
   const { state, dispatch } = useWizard()
-  const { register, control, handleSubmit, formState: { errors } } = useForm<BusinessInfo>({
+  const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm<BusinessInfo>({
     resolver: zodResolver(schema) as Resolver<BusinessInfo>,
-    defaultValues: state.businessInfo ?? { gymName: '', services: [], icp: '', channels: [] },
+    defaultValues: state.businessInfo ?? { gymName: '', services: [], otherServices: '', icp: '', channels: [] },
   })
 
+  const showOther = (watch('services') ?? []).includes('Other')
+
   function onSubmit(data: BusinessInfo) {
-    dispatch({ type: 'SET_BUSINESS_INFO', data })
+    const clean = data.services.includes('Other') ? data : { ...data, otherServices: undefined }
+    dispatch({ type: 'SET_BUSINESS_INFO', data: clean })
     dispatch({ type: 'SET_STEP', step: 3 })
   }
 
@@ -60,19 +72,38 @@ export function StepBusinessInfo() {
         <div>
           <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1.5">Services Offered</label>
           <Controller name="services" control={control} render={({ field }) => (
-            <ChipSelect options={SERVICE_OPTIONS} value={field.value} onChange={field.onChange} />
+            <ChipSelect
+              options={SERVICE_OPTIONS}
+              value={field.value}
+              onChange={(next) => {
+                field.onChange(next)
+                if (!next.includes('Other')) setValue('otherServices', '')
+              }}
+            />
           )} />
           {errors.services && <p className="text-red-500 text-xs mt-1">{errors.services.message}</p>}
+          {showOther && (
+            <div className="mt-3">
+              <input
+                {...register('otherServices')}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] focus:outline-none focus:border-[#81A1D3]"
+                placeholder="List your other services, separated by commas"
+              />
+              {errors.otherServices && <p className="text-red-500 text-xs mt-1">{errors.otherServices.message}</p>}
+            </div>
+          )}
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1.5">Who is your ideal member?</label>
+          <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1">Who is your ideal member?</label>
+          <p className="text-xs text-[#444444]/70 mb-2.5">Describe the member persona and the goals you help them achieve.</p>
           <input {...register('icp')} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] focus:outline-none focus:border-[#81A1D3]" placeholder="e.g. Adults 30–50 looking to lose weight and build consistency" />
           {errors.icp && <p className="text-red-500 text-xs mt-1">{errors.icp.message}</p>}
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1.5">Active Channels</label>
+          <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1">Active Channels</label>
+          <p className="text-xs text-[#444444]/70 mb-2.5">Select the channels you&apos;re currently using for your online presence.</p>
           <Controller name="channels" control={control} render={({ field }) => (
             <ChipSelect options={CHANNEL_OPTIONS} value={field.value} onChange={field.onChange} />
           )} />

@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { scrapeChannels } from '@/lib/firecrawl'
 import { GYM_MARKETING_SYSTEM_PROMPT } from '@/lib/prompts/gym-marketing'
 import { Channel, ChannelDetailsData, PreflightStatus, FallbackChannelData } from '@/lib/types'
+import { buildAuditEmailBlock } from '@/lib/email-context'
 
 const auditResultSchema = z.object({
   channel: z.string(),
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
   const body: {
     channelDetails: ChannelDetailsData
     preflightResults: Partial<Record<Channel, PreflightStatus>>
-    businessInfo: { gymName: string; icp: string; channels: Channel[] }
+    businessInfo: { gymName: string; icp: string; channels: Channel[]; services?: string[]; otherServices?: string }
   } = await request.json()
 
   // Collect URLs for scraping (only channels with preflight status 'pass')
@@ -56,10 +57,7 @@ Recent posts described: ${fb.recentPosts}`
       }
       if (channel === 'email') {
         const em = body.channelDetails.email
-        return `## email (Self-reported)
-Platform: ${em?.platform ?? 'unknown'}
-Subscribers: ${em?.subscriberCount ?? 'unknown'}
-Send frequency: ${em?.sendFrequency ?? 'unknown'}`
+        return em ? buildAuditEmailBlock(em) : '## email (Self-reported)\nNo details provided'
       }
       const scrapeResult = scraped.find((s) => s.channel === channel)
       if (!scrapeResult || scrapeResult.content === 'scrape_unavailable') {
@@ -69,8 +67,16 @@ Send frequency: ${em?.sendFrequency ?? 'unknown'}`
     })
     .join('\n\n')
 
+  // Merge selected services with the free-text "Other" detail for sharper context
+  const servicesParts = (body.businessInfo.services ?? []).filter((s) => s !== 'Other')
+  if (body.businessInfo.otherServices?.trim()) {
+    servicesParts.push(`Other: ${body.businessInfo.otherServices.trim()}`)
+  }
+  const servicesLine = servicesParts.length ? servicesParts.join(', ') : 'Not specified'
+
   const prompt = `
 Gym: ${body.businessInfo.gymName}
+Services offered: ${servicesLine}
 Their ideal member: ${body.businessInfo.icp}
 Active channels: ${body.businessInfo.channels.join(', ')}
 

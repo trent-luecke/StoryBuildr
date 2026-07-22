@@ -35,6 +35,7 @@ export function StepYourPlan() {
             businessInfo: state.businessInfo,
             auditResults: state.auditResults,
             storyMineAnswers: state.storyMineAnswers,
+            channelDetails: state.channelDetails,
           }),
         })
 
