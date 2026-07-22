@@ -57,9 +57,12 @@ Inside the Marketing Email List block, **above** the Platform dropdown:
 - A Yes/No control for the question, with an illustrative example:
   *"Do you use an email marketing platform? (e.g., MailChimp, ConvertKit, HubSpot, etc.)"*
   Rendered as a two-button toggle styled like the existing chips. Default unset.
-- **Yes** → reveal the existing Platform dropdown; when `Other` is picked, reveal a free-text
+- **Yes** → reveal the Platform dropdown; when `Other` is picked, reveal a free-text
   input (mirrors the services "Other" pattern from Business Info — placeholder e.g.
   *"Which platform?"*).
+  - Dropdown options expand to: **Mailchimp, Klaviyo, ConvertKit, HubSpot, GoHighLevel,
+    Other** (adds HubSpot + GoHighLevel to today's list; GoHighLevel is common among gyms).
+    `Other` stays last.
 - **No** → hide the Platform dropdown and Other input entirely. Still show Subscriber count
   and Send frequency.
 - `seededFormValues` extended to seed `usesPlatform`, `platform`, `otherPlatform` from state.
