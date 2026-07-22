@@ -188,7 +188,8 @@ export function StepChannelDetails() {
 
         {hasEmail && (
           <div className="border-t border-gray-100 pt-4">
-            <p className="text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-3">Email List</p>
+            <p className="text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1">Marketing Email List</p>
+            <p className="text-xs text-[#444444]/70 mb-3">Got more than one list? Describe your marketing list: the one for promos, new offerings, and events you send to members and past leads, not a members-only newsletter.</p>
             <div className="flex flex-col gap-3">
               <div>
                 <label className="block text-xs text-[#444444] mb-1">Platform</label>
