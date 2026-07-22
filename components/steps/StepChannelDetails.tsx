@@ -24,6 +24,7 @@ function seededFormValues(cd: ChannelDetailsData | null): Record<string, string>
   if (cd.website) v.website = cd.website.url
   if (cd.email) {
     v['email-platform'] = cd.email.platform ?? ''
+    v['email-other-platform'] = cd.email.otherPlatform ?? ''
     v['email-subscribers'] = String(cd.email.subscriberCount)
     v['email-frequency'] = cd.email.sendFrequency
   }
@@ -37,7 +38,7 @@ export function StepChannelDetails() {
   const hasWebsite = channels.includes('website')
   const hasEmail = channels.includes('email')
 
-  const { register, getValues } = useForm<Record<string, string>>({
+  const { register, getValues, watch, setValue } = useForm<Record<string, string>>({
     defaultValues: seededFormValues(state.channelDetails),
   })
   const [channelStates, setChannelStates] = useState<Partial<Record<Channel, ChannelState>>>(() => {
@@ -64,6 +65,11 @@ export function StepChannelDetails() {
     return out
   })
   const [isChecking, setIsChecking] = useState(false)
+  const [emailUsesPlatform, setEmailUsesPlatform] = useState<boolean | undefined>(
+    state.channelDetails?.email?.usesPlatform
+  )
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const platformValue = watch('email-platform')
 
   function setChannelState(channel: Channel, s: ChannelState) {
     setChannelStates((prev) => ({ ...prev, [channel]: s }))
@@ -119,7 +125,11 @@ export function StepChannelDetails() {
     if (hasWebsite && states.website !== 'skipped') channelDetails.website = { url: vals.website }
     if (hasEmail) {
       channelDetails.email = {
-        platform: vals['email-platform'],
+        usesPlatform: emailUsesPlatform,
+        platform: emailUsesPlatform ? (getValues('email-platform') || undefined) : undefined,
+        otherPlatform: emailUsesPlatform && getValues('email-platform') === 'Other'
+          ? (getValues('email-other-platform') || undefined)
+          : undefined,
         subscriberCount: parseInt(vals['email-subscribers'] || '0'),
         sendFrequency: vals['email-frequency'],
       }
@@ -192,12 +202,49 @@ export function StepChannelDetails() {
             <p className="text-xs text-[#444444]/70 mb-3">Got more than one list? Describe your marketing list: the one for promos, new offerings, and events you send to members and past leads, not a members-only newsletter.</p>
             <div className="flex flex-col gap-3">
               <div>
-                <label className="block text-xs text-[#444444] mb-1">Platform</label>
-                <select {...register('email-platform')} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] bg-white focus:outline-none focus:border-[#81A1D3]">
-                  <option value="">Select platform</option>
-                  {['Mailchimp', 'Klaviyo', 'ConvertKit', 'Other'].map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
+                <label className="block text-xs text-[#444444] mb-1.5">Do you use an email marketing platform? (e.g., MailChimp, ConvertKit, HubSpot, etc.)</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setEmailUsesPlatform(true); setEmailError(null) }}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium border transition-colors ${
+                      emailUsesPlatform === true
+                        ? 'border-[#81A1D3] bg-[#f0f5fb] text-[#81A1D3]'
+                        : 'border-gray-200 bg-white text-[#444444] hover:border-[#81A1D3]'
+                    }`}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setEmailUsesPlatform(false); setEmailError(null); setValue('email-platform', ''); setValue('email-other-platform', '') }}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium border transition-colors ${
+                      emailUsesPlatform === false
+                        ? 'border-[#81A1D3] bg-[#f0f5fb] text-[#81A1D3]'
+                        : 'border-gray-200 bg-white text-[#444444] hover:border-[#81A1D3]'
+                    }`}
+                  >
+                    No
+                  </button>
+                </div>
+                {emailError && <p className="text-red-500 text-xs mt-1">{emailError}</p>}
               </div>
+              {emailUsesPlatform === true && (
+                <div>
+                  <label className="block text-xs text-[#444444] mb-1">Platform</label>
+                  <select {...register('email-platform')} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] bg-white focus:outline-none focus:border-[#81A1D3]">
+                    <option value="">Select platform</option>
+                    {['Mailchimp', 'Klaviyo', 'ConvertKit', 'HubSpot', 'GoHighLevel', 'Other'].map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                  {platformValue === 'Other' && (
+                    <input
+                      {...register('email-other-platform')}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] focus:outline-none focus:border-[#81A1D3] mt-2"
+                      placeholder="Which platform?"
+                    />
+                  )}
+                </div>
+              )}
               <div className="flex gap-3">
                 <div className="flex-1">
                   <label className="block text-xs text-[#444444] mb-1">Subscriber count</label>
