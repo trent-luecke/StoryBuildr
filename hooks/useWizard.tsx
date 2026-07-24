@@ -8,6 +8,7 @@ const initialState: WizardState = {
   businessInfo: null,
   channelDetails: null,
   preflightResults: null,
+  socialInputs: {},
   auditResults: null,
   storyMineAnswers: {},
   storyPlan: null,
@@ -23,6 +24,11 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, channelDetails: action.data }
     case 'SET_PREFLIGHT_RESULTS':
       return { ...state, preflightResults: action.data }
+    case 'SET_SOCIAL_INPUT':
+      return {
+        ...state,
+        socialInputs: { ...state.socialInputs, [action.channel]: action.input },
+      }
     case 'SET_AUDIT_RESULTS':
       return { ...state, auditResults: action.data }
     case 'SET_STORY_MINE_ANSWER':

@@ -27,6 +27,7 @@ export const HAPPY_PATH: WizardState = {
     website: { status: 'pass' },
     email: { status: 'pass' },
   },
+  socialInputs: {},
   auditResults: [
     {
       channel: 'instagram',
