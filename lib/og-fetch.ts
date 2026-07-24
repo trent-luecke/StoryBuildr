@@ -94,7 +94,7 @@ export async function fetchPost(rawUrl: string): Promise<FetchPostResponse> {
     if (!og.title) return { status: 'blocked' } // login wall / no preview data
     return {
       status: 'ok',
-      caption: og.title || og.description || '',
+      caption: og.title,
       imageUrl: og.image,
       author: extractAuthor(og.title),
     }
