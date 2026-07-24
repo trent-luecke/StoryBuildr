@@ -174,6 +174,24 @@ via Firecrawl; email is unchanged.
   it is outside the platforms' formal terms and could change. Acceptable for a free lead magnet;
   noted, not mitigated.
 
+## Early de-risking: verify the prod-IP hit rate first
+
+The single biggest unknown is whether the `facebookexternalhit`-UA fetch works from Vercel's
+datacenter IPs (it's only been verified from a residential IP — see Error handling). This should
+be resolved **before** UI is built around it, because the answer reshapes priorities:
+
+- **The plan's first implementable task should be:** ship a minimal `/api/fetch-post` (route +
+  `lib/og-fetch.ts` only, no UI) to a **Vercel preview deployment**, then call it from that
+  deployment against a few real public post URLs and record whether they return `ok` or
+  `blocked`.
+- **If it works from prod IPs:** proceed with the full design as written (link method as the
+  featured path).
+- **If prod IPs are blocked:** the feature still ships, but the framing shifts — manual entry
+  becomes the primary path and the link method is a residential-only bonus. Better to learn this
+  from one deploy than after building the full per-channel UI.
+
+This front-loads the risk into a cheap, throwaway check rather than discovering it post-build.
+
 ## Testing / verification
 
 - **Unit:** `lib/og-fetch.ts` OG-parsing and host-allowlist logic (given sample HTML → parsed
@@ -187,7 +205,8 @@ via Firecrawl; email is unchanged.
 
 ## Risks
 
-- **Prod IP blocking** (above) — the main unknown; absorbed by graceful degradation.
+- **Prod IP blocking** (above) — the main unknown; verified early via the Vercel-preview check
+  (see "Early de-risking") and absorbed by graceful degradation regardless of the outcome.
 - **OG-parse brittleness** — platforms vary their tag formats; the parser reads standard `og:*`
   tags and tolerates missing fields (missing `og:title` → blocked). Isolated in `lib/og-fetch.ts`
   so it's easy to adjust.
