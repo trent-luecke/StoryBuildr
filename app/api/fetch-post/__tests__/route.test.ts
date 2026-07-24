@@ -40,3 +40,15 @@ test('returns invalid when url is missing or not a string', async () => {
   expect(res.status).toBe(200)
   expect((await res.json()).status).toBe('invalid')
 })
+
+test('returns invalid (200) for a JSON null body', async () => {
+  const res = await POST(postReq(null))
+  expect(res.status).toBe(200)
+  expect((await res.json()).status).toBe('invalid')
+})
+
+test('returns invalid (200) for a non-object JSON body', async () => {
+  const res = await POST(postReq(42))
+  expect(res.status).toBe(200)
+  expect((await res.json()).status).toBe('invalid')
+})
