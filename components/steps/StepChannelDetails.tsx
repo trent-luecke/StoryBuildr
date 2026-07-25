@@ -5,22 +5,19 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useWizard } from '@/hooks/useWizard'
 import { STEP_CARD } from '@/components/wizard/stepLayout'
-import { FallbackChannelForm } from '@/components/ui/FallbackChannelForm'
-import { Channel, ChannelDetailsData, PreflightStatus, FallbackChannelData } from '@/lib/types'
+import { SocialChannelInput } from '@/components/ui/SocialChannelInput'
+import { Channel, ChannelDetailsData, PreflightStatus, SocialInput } from '@/lib/types'
 
 const CHANNEL_LABELS: Record<Channel, string> = {
   instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn',
   website: 'Website', email: 'Email',
 }
 
-type ChannelState = 'idle' | 'checking' | 'pass' | 'unreachable' | 'blocked' | 'skipped' | 'fallback-done'
+type WebsiteState = 'idle' | 'checking' | 'pass' | 'unreachable' | 'skipped'
 
 function seededFormValues(cd: ChannelDetailsData | null): Record<string, string> {
   if (!cd) return {}
   const v: Record<string, string> = {}
-  if (cd.instagram) v.instagram = cd.instagram.url
-  if (cd.facebook) v.facebook = cd.facebook.url
-  if (cd.linkedin) v.linkedin = cd.linkedin.url
   if (cd.website) v.website = cd.website.url
   if (cd.email) {
     v['email-platform'] = cd.email.platform ?? ''
@@ -41,28 +38,13 @@ export function StepChannelDetails() {
   const { register, getValues, watch, setValue } = useForm<Record<string, string>>({
     defaultValues: seededFormValues(state.channelDetails),
   })
-  const [channelStates, setChannelStates] = useState<Partial<Record<Channel, ChannelState>>>(() => {
-    const pf = state.preflightResults
-    if (!pf) return {}
-    const out: Partial<Record<Channel, ChannelState>> = {}
-    for (const [c, r] of Object.entries(pf) as [Channel, PreflightStatus][]) {
-      if (c === 'email') continue // email has no URL row / badge
-      if (r.status === 'pass') out[c] = 'pass'
-      else if (r.status === 'fallback') out[c] = 'fallback-done'
-      else if (r.status === 'skipped') out[c] = 'skipped'
-      else if (r.status === 'unreachable') out[c] = 'unreachable'
-      else if (r.status === 'blocked') out[c] = 'blocked'
-    }
-    return out
-  })
-  const [fallbackData, setFallbackData] = useState<Partial<Record<Channel, FallbackChannelData>>>(() => {
-    const pf = state.preflightResults
-    if (!pf) return {}
-    const out: Partial<Record<Channel, FallbackChannelData>> = {}
-    for (const [c, r] of Object.entries(pf) as [Channel, PreflightStatus][]) {
-      if (r.status === 'fallback') out[c] = r.data
-    }
-    return out
+
+  const [websiteState, setWebsiteState] = useState<WebsiteState>(() => {
+    const w = state.preflightResults?.website
+    if (w?.status === 'pass') return 'pass'
+    if (w?.status === 'skipped') return 'skipped'
+    if (w?.status === 'unreachable') return 'unreachable'
+    return 'idle'
   })
   const [isChecking, setIsChecking] = useState(false)
   const [emailUsesPlatform, setEmailUsesPlatform] = useState<boolean | undefined>(
@@ -71,138 +53,112 @@ export function StepChannelDetails() {
   const [emailError, setEmailError] = useState<string | null>(null)
   const platformValue = watch('email-platform')
 
-  function setChannelState(channel: Channel, s: ChannelState) {
-    setChannelStates((prev) => ({ ...prev, [channel]: s }))
+  const websiteResolved = !hasWebsite || websiteState === 'pass' || websiteState === 'skipped'
+  const needsWebsiteCheck = hasWebsite && websiteState !== 'pass' && websiteState !== 'skipped'
+
+  function handleSocialChange(channel: Channel, input: SocialInput) {
+    dispatch({ type: 'SET_SOCIAL_INPUT', channel, input })
   }
 
-  async function runPreflight() {
+  async function runWebsiteCheck() {
     if (hasEmail && emailUsesPlatform === undefined) {
       setEmailError('Let us know so we can tailor your email plan.')
+      return
+    }
+    if (!hasWebsite) {
+      proceed()
       return
     }
     setIsChecking(true)
-    const vals = getValues()
-    const urls: Partial<Record<Channel, string>> = {}
-    if (hasWebsite) urls.website = vals.website
-    socialChannels.forEach((c) => { urls[c] = vals[c] })
-
+    setWebsiteState('checking')
     const res = await fetch('/api/preflight', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls }),
+      body: JSON.stringify({ urls: { website: getValues('website') } }),
     })
     const results: Partial<Record<Channel, PreflightStatus>> = await res.json()
-
-    const newStates: Partial<Record<Channel, ChannelState>> = {}
-    for (const [channel, result] of Object.entries(results) as [Channel, PreflightStatus][]) {
-      newStates[channel] = (result.status === 'pass' ? 'pass' : result.status) as ChannelState
-    }
-    setChannelStates(newStates)
+    const status = results.website?.status ?? 'unreachable'
+    const next: WebsiteState = status === 'pass' ? 'pass' : status === 'skipped' ? 'skipped' : 'unreachable'
+    setWebsiteState(next)
     setIsChecking(false)
-
-    const allResolved = channels
-      .filter((c) => c !== 'email')
-      .every((c) => {
-        const s = newStates[c]
-        return s === 'pass' || s === 'skipped' || s === 'fallback-done'
-      })
-
-    if (allResolved) proceed(newStates)
+    if (next === 'pass') proceed('pass')
   }
 
-  function handleFallbackSubmit(channel: Channel, data: FallbackChannelData) {
-    setFallbackData((prev) => ({ ...prev, [channel]: data }))
-    setChannelState(channel, 'fallback-done')
+  function skipWebsite() {
+    setWebsiteState('skipped')
   }
 
-  function handleSkip(channel: Channel) {
-    setChannelState(channel, 'skipped')
-  }
-
-  function proceed(states: Partial<Record<Channel, ChannelState>>) {
+  // `overrideWebsite` lets runWebsiteCheck proceed immediately with the freshly
+  // computed 'pass' before the state update has flushed.
+  function proceed(overrideWebsite?: WebsiteState) {
     if (hasEmail && emailUsesPlatform === undefined) {
       setEmailError('Let us know so we can tailor your email plan.')
       return
     }
+    const ws = overrideWebsite ?? websiteState
     const vals = getValues()
     const channelDetails: ChannelDetailsData = {}
-    socialChannels.forEach((c) => {
-      const s = states[c]
-      if (s !== 'skipped') (channelDetails as any)[c] = { url: vals[c] }
-    })
-    if (hasWebsite && states.website !== 'skipped') channelDetails.website = { url: vals.website }
+    if (hasWebsite && ws !== 'skipped') channelDetails.website = { url: vals.website }
     if (hasEmail) {
       channelDetails.email = {
         usesPlatform: emailUsesPlatform,
         platform: emailUsesPlatform ? (getValues('email-platform') || undefined) : undefined,
-        otherPlatform: emailUsesPlatform && getValues('email-platform') === 'Other'
-          ? (getValues('email-other-platform') || undefined)
-          : undefined,
+        otherPlatform:
+          emailUsesPlatform && getValues('email-platform') === 'Other'
+            ? (getValues('email-other-platform') || undefined)
+            : undefined,
         subscriberCount: parseInt(vals['email-subscribers'] || '0'),
         sendFrequency: vals['email-frequency'],
       }
     }
 
     const preflightResults: Partial<Record<Channel, PreflightStatus>> = {}
-    for (const c of channels) {
-      const s = states[c]
-      if (s === 'pass') preflightResults[c] = { status: 'pass' }
-      else if (s === 'skipped') preflightResults[c] = { status: 'skipped' }
-      else if (s === 'fallback-done') preflightResults[c] = { status: 'fallback', data: fallbackData[c]! }
-      else if (c === 'email') preflightResults[c] = { status: 'pass' }
-    }
+    if (hasWebsite) preflightResults.website = ws === 'skipped' ? { status: 'skipped' } : { status: 'pass' }
+    if (hasEmail) preflightResults.email = { status: 'pass' }
 
     dispatch({ type: 'SET_CHANNEL_DETAILS', data: channelDetails })
     dispatch({ type: 'SET_PREFLIGHT_RESULTS', data: preflightResults })
     dispatch({ type: 'SET_STEP', step: 4 })
   }
 
-  const nonEmailChannels = channels.filter((c) => c !== 'email')
-  const allResolved = nonEmailChannels.every((c) => {
-    const s = channelStates[c]
-    return s === 'pass' || s === 'skipped' || s === 'fallback-done'
-  })
-  const anyChecked = Object.keys(channelStates).length > 0
-
   return (
     <div className={STEP_CARD}>
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Step 3</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">Your channel details</h2>
-      <p className="text-sm text-[#444444] mb-6">We'll use these to audit your current content.</p>
+      <p className="text-sm text-[#444444] mb-6">We&apos;ll use these to audit your current content.</p>
 
-      <div className="flex flex-col gap-4">
-        {[...socialChannels, ...(hasWebsite ? ['website' as Channel] : [])].map((channel) => {
-          const s = channelStates[channel]
-          return (
-            <div key={channel}>
-              <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1.5">
-                {CHANNEL_LABELS[channel]} {channel !== 'website' ? 'URL or handle' : 'URL'}
-                {s === 'pass' && <span className="ml-2 text-green-600 normal-case font-normal">✓ Accessible</span>}
-                {s === 'unreachable' && <span className="ml-2 text-red-500 normal-case font-normal">⚠ Unreachable</span>}
-                {s === 'skipped' && <span className="ml-2 text-[#444444]/50 normal-case font-normal">Skipped</span>}
-              </label>
-              <input
-                {...register(channel)}
-                disabled={s === 'skipped' || s === 'fallback-done'}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] focus:outline-none focus:border-[#81A1D3] disabled:bg-gray-50 disabled:text-gray-400"
-                placeholder={channel === 'website' ? 'https://yourgym.com' : `https://${channel}.com/yourgym`}
-              />
-              {s === 'unreachable' && (
-                <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                  <p className="text-xs text-red-700 mb-2">We had trouble reaching this URL. You can update it and try again, or skip this channel.</p>
-                  <button type="button" onClick={() => handleSkip(channel)} className="text-xs text-[#444444]/60 hover:text-[#444444]">Skip this channel</button>
-                </div>
-              )}
-              {s === 'blocked' && (
-                <FallbackChannelForm
-                  channelLabel={CHANNEL_LABELS[channel]}
-                  onSubmit={(data) => handleFallbackSubmit(channel, data)}
-                  onSkip={() => handleSkip(channel)}
-                />
-              )}
-            </div>
-          )
-        })}
+      <div className="flex flex-col gap-6">
+        {socialChannels.map((channel) => (
+          <SocialChannelInput
+            key={channel}
+            channel={channel}
+            value={state.socialInputs[channel]}
+            onChange={(input) => handleSocialChange(channel, input)}
+          />
+        ))}
+
+        {hasWebsite && (
+          <div>
+            <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1.5">
+              {CHANNEL_LABELS.website} URL
+              {websiteState === 'pass' && <span className="ml-2 text-green-600 normal-case font-normal">✓ Accessible</span>}
+              {websiteState === 'unreachable' && <span className="ml-2 text-red-500 normal-case font-normal">⚠ Unreachable</span>}
+              {websiteState === 'skipped' && <span className="ml-2 text-[#444444]/50 normal-case font-normal">Skipped</span>}
+            </label>
+            <input
+              {...register('website')}
+              disabled={websiteState === 'skipped'}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] focus:outline-none focus:border-[#81A1D3] disabled:bg-gray-50 disabled:text-gray-400"
+              placeholder="https://yourgym.com"
+            />
+            {websiteState === 'unreachable' && (
+              <div className="mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <p className="text-xs text-red-700 mb-2">We had trouble reaching this URL. You can update it and try again, or skip this channel.</p>
+                <button type="button" onClick={skipWebsite} className="text-xs text-[#444444]/60 hover:text-[#444444]">Skip this channel</button>
+              </div>
+            )}
+          </div>
+        )}
 
         {hasEmail && (
           <div className="border-t border-gray-100 pt-4">
@@ -273,15 +229,13 @@ export function StepChannelDetails() {
 
       <div className="flex justify-between items-center mt-6">
         <button type="button" onClick={() => dispatch({ type: 'SET_STEP', step: 2 })} className="text-sm text-[#444444]/60 hover:text-[#444444]">← Back</button>
-        {!anyChecked ? (
-          <button type="button" onClick={runPreflight} disabled={isChecking} className="bg-[#81A1D3] text-[#1E212E] font-extrabold px-6 py-2.5 rounded-lg text-sm tracking-wide hover:bg-[#6b8fbf] disabled:opacity-50 transition-colors">
-            {isChecking ? 'Checking…' : 'Check & Continue →'}
+        {needsWebsiteCheck ? (
+          <button type="button" onClick={runWebsiteCheck} disabled={isChecking} className="bg-[#81A1D3] text-[#1E212E] font-extrabold px-6 py-2.5 rounded-lg text-sm tracking-wide hover:bg-[#6b8fbf] disabled:opacity-50 transition-colors">
+            {isChecking ? 'Checking…' : websiteState === 'unreachable' ? 'Re-check →' : 'Check & Continue →'}
           </button>
-        ) : allResolved ? (
-          <button type="button" onClick={() => proceed(channelStates)} className="bg-[#81A1D3] text-[#1E212E] font-extrabold px-6 py-2.5 rounded-lg text-sm tracking-wide hover:bg-[#6b8fbf] transition-colors">Begin Audit →</button>
         ) : (
-          <button type="button" onClick={runPreflight} disabled={isChecking} className="bg-[#81A1D3] text-[#1E212E] font-extrabold px-6 py-2.5 rounded-lg text-sm tracking-wide hover:bg-[#6b8fbf] disabled:opacity-50 transition-colors">
-            {isChecking ? 'Checking…' : 'Re-check →'}
+          <button type="button" onClick={() => proceed()} disabled={!websiteResolved} className="bg-[#81A1D3] text-[#1E212E] font-extrabold px-6 py-2.5 rounded-lg text-sm tracking-wide hover:bg-[#6b8fbf] disabled:opacity-50 transition-colors">
+            Begin Audit →
           </button>
         )}
       </div>

@@ -51,19 +51,19 @@ describe('Channel Details email gating UI', () => {
   it('blocks proceeding and shows an error when the gating question is unanswered', () => {
     global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch
     renderStep()
-    fireEvent.click(screen.getByRole('button', { name: /Check & Continue/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Begin Audit/i }))
     expect(screen.getByText('Let us know so we can tailor your email plan.')).toBeInTheDocument()
     expect(global.fetch).not.toHaveBeenCalled()
     jest.resetAllMocks()
   })
 
-  it('allows proceeding once the gating question is answered', async () => {
-    global.fetch = jest.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) })) as unknown as typeof fetch
+  it('proceeds without any preflight call once gating is answered (email-only, no website)', () => {
+    global.fetch = jest.fn(() => new Promise(() => {})) as unknown as typeof fetch
     renderStep()
     fireEvent.click(screen.getByRole('button', { name: 'No' }))
-    fireEvent.click(screen.getByRole('button', { name: /Check & Continue/i }))
-    await new Promise((r) => setTimeout(r, 0))
-    expect(global.fetch).toHaveBeenCalledWith('/api/preflight', expect.anything())
+    fireEvent.click(screen.getByRole('button', { name: /Begin Audit/i }))
+    // no website ⇒ no /api/preflight call
+    expect(global.fetch).not.toHaveBeenCalled()
     jest.resetAllMocks()
   })
 })
