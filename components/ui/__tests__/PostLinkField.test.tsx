@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { PostLinkField } from '@/components/ui/PostLinkField'
 import { FetchedPost } from '@/lib/types'
 
@@ -38,4 +38,37 @@ it('shows the invalid message for a non-post link', () => {
   const post: FetchedPost = { url: 'https://instagram.com/x#preview=invalid', caption: '' }
   setup({ initialPost: post })
   expect(screen.getByText(/doesn't look like a post link|doesn't look like a post link/i)).toBeInTheDocument()
+})
+
+it('ignores a stale response when a newer check supersedes it', async () => {
+  jest.useFakeTimers()
+  let resolveFirst: (v: unknown) => void = () => {}
+  let resolveSecond: (v: unknown) => void = () => {}
+  const fetchMock = jest
+    .fn()
+    .mockImplementationOnce(() => new Promise((r) => { resolveFirst = r }))
+    .mockImplementationOnce(() => new Promise((r) => { resolveSecond = r }))
+  global.fetch = fetchMock as unknown as typeof fetch
+
+  const onResolved = jest.fn()
+  render(
+    <PostLinkField platformLabel="Instagram" onResolved={onResolved} onSwitchToManual={() => {}} />
+  )
+  const input = screen.getByRole('textbox') as HTMLInputElement
+
+  fireEvent.change(input, { target: { value: 'https://www.instagram.com/p/AAA/' } })
+  act(() => { jest.advanceTimersByTime(400) })
+  fireEvent.change(input, { target: { value: 'https://www.instagram.com/p/BBB/' } })
+  act(() => { jest.advanceTimersByTime(400) })
+
+  await act(async () => {
+    resolveSecond({ json: async () => ({ status: 'ok', caption: 'newest', author: 'gym' }) })
+  })
+  await act(async () => {
+    resolveFirst({ json: async () => ({ status: 'blocked' }) })
+  })
+
+  expect(screen.getByText(/Got it/i)).toBeInTheDocument()
+  expect(screen.queryByText(/access this post/i)).toBeNull()
+  jest.useRealTimers()
 })

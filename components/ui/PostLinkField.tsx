@@ -27,6 +27,7 @@ export function PostLinkField({
   const [result, setResult] = useState<FetchedPost | null>(initialPost ?? null)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didMountCheck = useRef(false)
+  const reqId = useRef(0)
 
   async function runCheck(value: string) {
     const trimmed = value.trim()
@@ -36,6 +37,7 @@ export function PostLinkField({
       onResolved(null)
       return
     }
+    const myReq = ++reqId.current
     setStatus('checking')
 
     // Preview harness: never hit the network; derive a settled status.
@@ -59,6 +61,7 @@ export function PostLinkField({
         body: JSON.stringify({ url: trimmed }),
       })
       const data: FetchPostResponse = await res.json()
+      if (myReq !== reqId.current) return
       if (data.status === 'ok') {
         const post: FetchedPost = {
           url: trimmed,
@@ -71,6 +74,7 @@ export function PostLinkField({
         setResult(null); setStatus(data.status); onResolved(null)
       }
     } catch {
+      if (myReq !== reqId.current) return
       setResult(null); setStatus('blocked'); onResolved(null)
     }
   }
