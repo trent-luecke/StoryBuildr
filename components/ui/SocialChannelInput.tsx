@@ -1,7 +1,7 @@
 // components/ui/SocialChannelInput.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useWizard } from '@/hooks/useWizard'
 import { ChipSelect } from './ChipSelect'
 import { PostLinkField } from './PostLinkField'
@@ -49,15 +49,10 @@ export function SocialChannelInput({ channel, value, onChange }: SocialChannelIn
     return arr
   })
 
-  function commitLinks(next: (FetchedPost | null)[]) {
-    onChange({ method: 'links', posts: next.filter((p): p is FetchedPost => p != null) })
-  }
-
   function setPostAt(i: number, post: FetchedPost | null) {
     setPosts((prev) => {
       const next = [...prev]
       next[i] = post
-      commitLinks(next)
       return next
     })
   }
@@ -70,18 +65,31 @@ export function SocialChannelInput({ channel, value, onChange }: SocialChannelIn
   )
 
   function updateManual(patch: Partial<FallbackChannelData>) {
-    setManual((prev) => {
-      const next = { ...prev, ...patch }
-      onChange({ method: 'manual', ...next })
-      return next
-    })
+    setManual((prev) => ({ ...prev, ...patch }))
   }
 
   function chooseMethod(m: 'links' | 'manual') {
     setMethod(m)
-    if (m === 'links') commitLinks(posts)
-    else onChange({ method: 'manual', ...manual })
   }
+
+  // Commit the current value to the parent from an effect, never during
+  // render — calling onChange inside a setPosts/setManual updater would
+  // dispatch to WizardProvider while SocialChannelInput is still rendering.
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  })
+
+  useEffect(() => {
+    if (method === 'links') {
+      onChangeRef.current({ method: 'links', posts: posts.filter((p): p is FetchedPost => p != null) })
+    } else if (method === 'manual') {
+      onChangeRef.current({ method: 'manual', ...manual })
+    }
+    // when method is undefined (fresh channel, user hasn't chosen), emit
+    // nothing — preserves prior behavior of not writing socialInputs[channel]
+    // until a choice/resolve happens
+  }, [method, posts, manual])
 
   return (
     <div>
