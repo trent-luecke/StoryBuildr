@@ -41,6 +41,7 @@ export function StepAuditLoading() {
           body: JSON.stringify({
             channelDetails: state.channelDetails,
             preflightResults: state.preflightResults,
+            socialInputs: state.socialInputs,
             businessInfo: {
               gymName: state.businessInfo!.gymName,
               icp: state.businessInfo!.icp,

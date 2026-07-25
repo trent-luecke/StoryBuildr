@@ -27,6 +27,25 @@ export const HAPPY_PATH: WizardState = {
     website: { status: 'pass' },
     email: { status: 'pass' },
   },
+  socialInputs: {
+    instagram: {
+      method: 'links',
+      posts: [
+        {
+          url: 'https://www.instagram.com/p/EXAMPLE1/',
+          caption: 'Member spotlight: Sarah hit 20 pushups today 💪',
+          author: 'ironpeakfitness',
+          imageUrl: 'https://example.com/sarah.jpg',
+        },
+      ],
+    },
+    facebook: {
+      method: 'manual',
+      postFrequency: 'Weekly',
+      contentTypes: ['promos', 'spotlights'],
+      recentPosts: 'Class schedule graphic, a member win, and a weekend challenge announcement.',
+    },
+  },
   auditResults: [
     {
       channel: 'instagram',
@@ -211,6 +230,53 @@ export const PREVIEW_VIEWS: PreviewView[] = [
       businessInfo: HAPPY_PATH.businessInfo,
       channelDetails: HAPPY_PATH.channelDetails,
       preflightResults: HAPPY_PATH.preflightResults,
+    },
+  },
+  {
+    id: 'channel-links-success',
+    label: '3 · Social: link success',
+    seed: {
+      currentStep: 3,
+      businessInfo: { gymName: 'Iron Peak Fitness', services: ['Group Classes'], icp: HAPPY_PATH.businessInfo!.icp, channels: ['instagram'] },
+      socialInputs: {
+        instagram: {
+          method: 'links',
+          posts: [
+            { url: 'https://www.instagram.com/p/EXAMPLE1/', caption: 'Member spotlight: Sarah hit 20 pushups today 💪', author: 'ironpeakfitness' },
+          ],
+        },
+      },
+    },
+  },
+  {
+    id: 'channel-manual',
+    label: '3 · Social: manual',
+    seed: {
+      currentStep: 3,
+      businessInfo: { gymName: 'Iron Peak Fitness', services: ['Group Classes'], icp: HAPPY_PATH.businessInfo!.icp, channels: ['instagram'] },
+      socialInputs: {
+        instagram: {
+          method: 'manual',
+          postFrequency: 'A few times a week',
+          contentTypes: ['tips', 'spotlights', 'motivation'],
+          recentPosts: 'Before/after transformation, a class schedule graphic, and a motivational quote card.',
+        },
+      },
+    },
+  },
+  {
+    id: 'channel-links-blocked',
+    label: '3 · Social: blocked',
+    seed: {
+      currentStep: 3,
+      businessInfo: { gymName: 'Iron Peak Fitness', services: ['Group Classes'], icp: HAPPY_PATH.businessInfo!.icp, channels: ['instagram'] },
+      socialInputs: {
+        instagram: {
+          method: 'links',
+          // Preview-only sentinel: PostLinkField renders the blocked state without a live fetch.
+          posts: [{ url: 'https://www.instagram.com/p/EXAMPLE2/#preview=blocked', caption: '' }],
+        },
+      },
     },
   },
   {
