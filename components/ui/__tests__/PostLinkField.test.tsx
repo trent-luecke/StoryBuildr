@@ -34,6 +34,35 @@ it('shows the blocked nudge and switches to manual', () => {
   expect(onResolved).toHaveBeenCalledWith(null)
 })
 
+it('keeps the settled blocked nudge on blur so its manual button stays clickable', async () => {
+  // Regression: blurring the input (which happens when clicking the nudge button)
+  // must NOT re-run the check and flip status back to 'checking', which would
+  // unmount the "describe manually" button before the click lands.
+  jest.useFakeTimers()
+  const fetchMock = jest.fn().mockResolvedValue({ json: async () => ({ status: 'blocked' }) })
+  global.fetch = fetchMock as unknown as typeof fetch
+
+  const onSwitchToManual = jest.fn()
+  render(
+    <PostLinkField platformLabel="Instagram" onResolved={() => {}} onSwitchToManual={onSwitchToManual} />
+  )
+  const input = screen.getByRole('textbox') as HTMLInputElement
+
+  fireEvent.change(input, { target: { value: 'https://www.instagram.com/p/ZzZ/' } })
+  await act(async () => { jest.advanceTimersByTime(400) })
+  // Settled to blocked; the debounced check ran exactly once.
+  expect(fetchMock).toHaveBeenCalledTimes(1)
+  expect(screen.getByRole('button', { name: /describe your posts manually/i })).toBeInTheDocument()
+
+  // Blur (as clicking the nudge would) must not re-fetch or unmount the button.
+  await act(async () => { fireEvent.blur(input) })
+  expect(fetchMock).toHaveBeenCalledTimes(1)
+  const nudge = screen.getByRole('button', { name: /describe your posts manually/i })
+  fireEvent.click(nudge)
+  expect(onSwitchToManual).toHaveBeenCalled()
+  jest.useRealTimers()
+})
+
 it('shows the invalid message for a non-post link', () => {
   const post: FetchedPost = { url: 'https://instagram.com/x#preview=invalid', caption: '' }
   setup({ initialPost: post })

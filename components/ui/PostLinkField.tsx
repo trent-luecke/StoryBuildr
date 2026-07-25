@@ -81,7 +81,10 @@ export function PostLinkField({
 
   function scheduleCheck(value: string) {
     if (debounce.current) clearTimeout(debounce.current)
-    debounce.current = setTimeout(() => runCheck(value), 400)
+    debounce.current = setTimeout(() => {
+      debounce.current = null
+      runCheck(value)
+    }, 400)
   }
 
   // In preview mode, resolve a seeded URL once on mount (no fetch) so the
@@ -108,7 +111,13 @@ export function PostLinkField({
           scheduleCheck(e.target.value)
         }}
         onBlur={() => {
-          if (debounce.current) clearTimeout(debounce.current)
+          // Only run on blur if a debounced check is still pending (user blurred
+          // before the 400ms fired). If the check already settled, re-running it
+          // here would flip status back to 'checking' and unmount the settled
+          // state — e.g. destroying the "describe manually" button mid-click.
+          if (!debounce.current) return
+          clearTimeout(debounce.current)
+          debounce.current = null
           runCheck(url)
         }}
         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] focus:outline-none focus:border-[#81A1D3]"
