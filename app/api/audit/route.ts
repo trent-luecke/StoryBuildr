@@ -5,7 +5,7 @@ import { streamObject } from 'ai'
 import { z } from 'zod'
 import { scrapeChannels } from '@/lib/firecrawl'
 import { GYM_MARKETING_SYSTEM_PROMPT } from '@/lib/prompts/gym-marketing'
-import { Channel, ChannelDetailsData, PreflightStatus, FallbackChannelData } from '@/lib/types'
+import { Channel, ChannelDetailsData, PreflightStatus, SocialInput } from '@/lib/types'
 import { buildAuditEmailBlock } from '@/lib/email-context'
 
 const auditResultSchema = z.object({
@@ -25,8 +25,11 @@ export async function POST(request: NextRequest) {
   const body: {
     channelDetails: ChannelDetailsData
     preflightResults: Partial<Record<Channel, PreflightStatus>>
+    socialInputs?: Partial<Record<Channel, SocialInput>>
     businessInfo: { gymName: string; icp: string; channels: Channel[]; services?: string[]; otherServices?: string }
   } = await request.json()
+
+  const SOCIAL = new Set<Channel>(['instagram', 'facebook', 'linkedin'])
 
   // Collect URLs for scraping (only channels with preflight status 'pass')
   const scrapableUrls: Partial<Record<Channel, string>> = {}
@@ -44,16 +47,27 @@ export async function POST(request: NextRequest) {
   // Build channel summaries for the prompt
   const channelSummaries = body.businessInfo.channels
     .map((channel) => {
+      if (SOCIAL.has(channel)) {
+        const si = body.socialInputs?.[channel]
+        if (!si) {
+          return `## ${channel} (Self-reported — no details provided; do not score)`
+        }
+        if (si.method === 'links') {
+          const lines = si.posts
+            .map((p, i) => `Post ${i + 1}${p.author ? ` by @${p.author}` : ''}: ${p.caption}${p.imageUrl ? ' [has image]' : ''}`)
+            .join('\n')
+          return `## ${channel} (Self-reported example posts — no score, use "Self-reported" badge)
+${lines || 'No posts provided'}`
+        }
+        return `## ${channel} (Self-reported — no score, use "Self-reported" badge)
+Post frequency: ${si.postFrequency}
+Content types: ${si.contentTypes.join(', ')}
+Recent posts described: ${si.recentPosts}`
+      }
+
       const preflight = body.preflightResults[channel]
       if (preflight?.status === 'skipped') {
         return `## ${channel} (SKIPPED — exclude from audit)`
-      }
-      if (preflight?.status === 'fallback') {
-        const fb = preflight.data as FallbackChannelData
-        return `## ${channel} (Self-reported — no score, use "Self-reported" badge)
-Post frequency: ${fb.postFrequency}
-Content types: ${fb.contentTypes.join(', ')}
-Recent posts described: ${fb.recentPosts}`
       }
       if (channel === 'email') {
         const em = body.channelDetails.email
