@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useWizard } from '@/hooks/useWizard'
 import { ChipSelect } from './ChipSelect'
 import { PostLinkField } from './PostLinkField'
+import { CopyLinkHelp } from './CopyLinkHelp'
 import { Channel, FetchedPost, SocialInput, FallbackChannelData } from '@/lib/types'
 
 const CONTENT_TYPE_OPTIONS = [
@@ -109,6 +110,7 @@ export function SocialChannelInput({ channel, value, onChange }: SocialChannelIn
 
       {method === 'links' && (
         <div className="flex flex-col gap-3">
+          <CopyLinkHelp platformLabel={label} />
           {Array.from({ length: fieldCount }).map((_, i) => (
             <PostLinkField
               key={i}

@@ -52,6 +52,23 @@ it('adds up to three link fields', () => {
   expect(screen.queryByRole('button', { name: /add another post/i })).toBeNull()
 })
 
+it('renders the copy-link helper once in the links branch, not per field', () => {
+  setup()
+  fireEvent.click(screen.getByRole('button', { name: /Paste example posts/i }))
+  fireEvent.click(screen.getByRole('button', { name: /add another post/i }))
+  expect(
+    screen.getAllByRole('button', { name: /how do i copy a post link/i })
+  ).toHaveLength(1)
+})
+
+it('does not render the copy-link helper in the manual branch', () => {
+  setup()
+  fireEvent.click(screen.getByRole('button', { name: /Describe it manually/i }))
+  expect(
+    screen.queryByRole('button', { name: /how do i copy a post link/i })
+  ).toBeNull()
+})
+
 it('reveals manual questions and commits manual input', () => {
   const { onChange } = setup()
   fireEvent.click(screen.getByRole('button', { name: /Describe it manually/i }))
