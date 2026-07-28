@@ -22,16 +22,20 @@ export function WebsiteChannelScreen({ current, total, isLast, initialUrl, onBac
 
   async function runCheck() {
     setWs('checking')
-    const res = await fetch('/api/preflight', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls: { website: url } }),
-    })
-    const results: Partial<Record<Channel, PreflightStatus>> = await res.json()
-    const status = results.website?.status ?? 'unreachable'
-    if (status === 'pass' || status === 'skipped') {
-      onContinue({ url, status: 'pass' })
-    } else {
+    try {
+      const res = await fetch('/api/preflight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls: { website: url } }),
+      })
+      const results: Partial<Record<Channel, PreflightStatus>> = await res.json()
+      const status = results.website?.status ?? 'unreachable'
+      if (status === 'pass' || status === 'skipped') {
+        onContinue({ url, status: 'pass' })
+      } else {
+        setWs('unreachable')
+      }
+    } catch {
       setWs('unreachable')
     }
   }

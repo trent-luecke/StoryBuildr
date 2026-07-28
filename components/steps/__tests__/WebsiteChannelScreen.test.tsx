@@ -40,3 +40,18 @@ it('last screen shows the Begin Audit label', () => {
   render(<WebsiteChannelScreen current={2} total={2} isLast onBack={() => {}} onContinue={() => {}} />)
   expect(screen.getByRole('button', { name: /Begin Audit/i })).toBeInTheDocument()
 })
+
+it('recovers to the skip affordance when the preflight request fails', async () => {
+  global.fetch = jest.fn(() => Promise.reject(new Error('network'))) as unknown as typeof fetch
+  const onContinue = jest.fn()
+  render(<WebsiteChannelScreen current={1} total={2} isLast={false} onBack={() => {}} onContinue={onContinue} />)
+  fireEvent.change(screen.getByPlaceholderText('https://yourgym.com'), { target: { value: 'https://g.com' } })
+  fireEvent.click(screen.getByRole('button', { name: /Check & continue/i }))
+  // does not hang in "Checking…"; shows the recovery affordance
+  const skip = await screen.findByRole('button', { name: /Skip this channel/i })
+  expect(onContinue).not.toHaveBeenCalled()
+  // primary button is re-enabled (not stuck disabled on "Checking…")
+  expect(screen.getByRole('button', { name: /Check & continue/i })).not.toBeDisabled()
+  fireEvent.click(skip)
+  expect(onContinue).toHaveBeenCalledWith({ url: 'https://g.com', status: 'skipped' })
+})
