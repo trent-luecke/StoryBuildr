@@ -9,6 +9,7 @@ type Status = 'idle' | 'checking' | 'ok' | 'blocked' | 'invalid'
 
 interface PostLinkFieldProps {
   platformLabel: string
+  placeholder?: string
   initialPost?: FetchedPost
   previewMode?: boolean
   onResolved: (post: FetchedPost | null) => void
@@ -17,6 +18,7 @@ interface PostLinkFieldProps {
 
 export function PostLinkField({
   platformLabel,
+  placeholder,
   initialPost,
   previewMode = false,
   onResolved,
@@ -121,7 +123,7 @@ export function PostLinkField({
           runCheck(url)
         }}
         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] focus:outline-none focus:border-[#81A1D3]"
-        placeholder={`Paste a link to one ${platformLabel} post`}
+        placeholder={placeholder ?? `Paste a link to one ${platformLabel} post`}
       />
 
       {status === 'checking' && (

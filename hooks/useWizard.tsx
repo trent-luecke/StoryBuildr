@@ -5,6 +5,7 @@ import { WizardState, WizardAction } from '@/lib/types'
 
 const initialState: WizardState = {
   currentStep: 1,
+  channelIntroSeen: false,
   businessInfo: null,
   channelDetails: null,
   preflightResults: null,
@@ -38,6 +39,8 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       }
     case 'SET_STORY_PLAN':
       return { ...state, storyPlan: action.data }
+    case 'MARK_CHANNEL_INTRO_SEEN':
+      return { ...state, channelIntroSeen: true }
     default:
       return state
   }

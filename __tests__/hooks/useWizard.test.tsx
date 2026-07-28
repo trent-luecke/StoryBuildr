@@ -61,3 +61,14 @@ test('SET_SOCIAL_INPUT stores a per-channel input and merges', () => {
     recentPosts: 'x',
   })
 })
+
+test('channelIntroSeen defaults to false', () => {
+  const { result } = renderHook(() => useWizard(), { wrapper })
+  expect(result.current.state.channelIntroSeen).toBe(false)
+})
+
+test('MARK_CHANNEL_INTRO_SEEN sets channelIntroSeen true', () => {
+  const { result } = renderHook(() => useWizard(), { wrapper })
+  act(() => result.current.dispatch({ type: 'MARK_CHANNEL_INTRO_SEEN' }))
+  expect(result.current.state.channelIntroSeen).toBe(true)
+})

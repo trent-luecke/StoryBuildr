@@ -39,7 +39,7 @@ it('shows neither branch until a method is chosen', () => {
 it('reveals link fields when "Paste example posts" is chosen', () => {
   setup()
   fireEvent.click(screen.getByRole('button', { name: /Paste example posts/i }))
-  expect(screen.getByPlaceholderText(/Paste a link to one Instagram post/i)).toBeInTheDocument()
+  expect(screen.getByPlaceholderText('https://instagram.com/p/...')).toBeInTheDocument()
 })
 
 it('adds up to three link fields', () => {
@@ -47,7 +47,7 @@ it('adds up to three link fields', () => {
   fireEvent.click(screen.getByRole('button', { name: /Paste example posts/i }))
   fireEvent.click(screen.getByRole('button', { name: /add another post/i }))
   fireEvent.click(screen.getByRole('button', { name: /add another post/i }))
-  expect(screen.getAllByPlaceholderText(/Paste a link to one Instagram post/i)).toHaveLength(3)
+  expect(screen.getAllByPlaceholderText('https://instagram.com/p/...')).toHaveLength(3)
   // capped at 3 — the add button is gone
   expect(screen.queryByRole('button', { name: /add another post/i })).toBeNull()
 })
@@ -115,4 +115,28 @@ it('does not trigger a setState-in-render warning when a seeded link resolves', 
   expect(offending).toBeUndefined()
 
   errorSpy.mockRestore()
+})
+
+it('shows the per-platform example-URL placeholder in the links branch', () => {
+  setup()
+  fireEvent.click(screen.getByRole('button', { name: /Paste example posts/i }))
+  expect(screen.getByPlaceholderText('https://instagram.com/p/...')).toBeInTheDocument()
+})
+
+it('shows a persistent manual example under the describe field', () => {
+  setup()
+  fireEvent.click(screen.getByRole('button', { name: /Describe it manually/i }))
+  expect(screen.getByPlaceholderText('Describe them here…')).toBeInTheDocument()
+  expect(
+    screen.getByText(/A Reel of a coach demoing proper squat form/i)
+  ).toBeInTheDocument()
+})
+
+it('hides its internal header when hideHeader is set', () => {
+  render(
+    <WizardProvider previewMode>
+      <SocialChannelInput channel="instagram" hideHeader onChange={() => {}} />
+    </WizardProvider>
+  )
+  expect(screen.queryByText(/How would you like to share/i)).toBeNull()
 })
