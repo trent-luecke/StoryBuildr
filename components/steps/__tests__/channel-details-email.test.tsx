@@ -4,6 +4,7 @@ import { StepChannelDetails } from '@/components/steps/StepChannelDetails'
 import { WizardState } from '@/lib/types'
 
 const seed: Partial<WizardState> = {
+  channelIntroSeen: true,
   businessInfo: { gymName: 'Test Gym', services: ['Open Gym'], icp: 'x', channels: ['email'] },
   channelDetails: {},
   preflightResults: {},
