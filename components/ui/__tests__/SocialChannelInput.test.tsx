@@ -127,7 +127,9 @@ it('shows a persistent manual example under the describe field', () => {
   setup()
   fireEvent.click(screen.getByRole('button', { name: /Describe it manually/i }))
   expect(screen.getByPlaceholderText('Describe them here…')).toBeInTheDocument()
-  expect(screen.getByText(/Example:/)).toHaveTextContent(/Reel of a coach demoing proper squat form/)
+  expect(
+    screen.getByText(/A Reel of a coach demoing proper squat form/i)
+  ).toBeInTheDocument()
 })
 
 it('hides its internal header when hideHeader is set', () => {
