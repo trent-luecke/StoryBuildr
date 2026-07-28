@@ -30,6 +30,7 @@ export function StepChannelDetails() {
   const total = ordered.length
 
   const [showIntro, setShowIntro] = useState(!state.channelIntroSeen)
+  const [introSeenAtMount] = useState(state.channelIntroSeen)
   const [cursor, setCursor] = useState(0)
   const [websiteResult, setWebsiteResult] = useState<WebsiteResult | null>(() => {
     const w = state.preflightResults?.website
@@ -55,7 +56,7 @@ export function StepChannelDetails() {
 
   function back() {
     if (cursor > 0) { setCursor(cursor - 1); return }
-    if (!state.channelIntroSeen) { setShowIntro(true); return } // first pass: return to the lead-in
+    if (!introSeenAtMount) { setShowIntro(true); return } // first pass this mount: return to the lead-in
     dispatch({ type: 'SET_STEP', step: 2 })
   }
 

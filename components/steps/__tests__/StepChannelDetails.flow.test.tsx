@@ -71,3 +71,16 @@ it('Back from the first channel returns to Business Info (step 2) on a return vi
   fireEvent.click(screen.getByRole('button', { name: /← Back/i }))
   expect(probe.step).toBe(2)
 })
+
+it('Back from the first channel returns to the lead-in on the first pass (intro not yet seen)', () => {
+  const probe = renderStep({ ...baseSeed(['instagram']), channelIntroSeen: false })
+  // lead-in shows first
+  expect(screen.getByText(/the part that does the heavy lifting/i)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /Let's do it/i }))
+  // now on the first channel screen
+  expect(screen.getByRole('heading', { name: 'Your Instagram' })).toBeInTheDocument()
+  // Back returns to the lead-in, NOT to Business Info
+  fireEvent.click(screen.getByRole('button', { name: /← Back/i }))
+  expect(screen.getByText(/the part that does the heavy lifting/i)).toBeInTheDocument()
+  expect(probe.step).toBe(3) // still on Channel Details, not kicked to step 2
+})
