@@ -225,7 +225,7 @@ export const PREVIEW_VIEWS: PreviewView[] = [
   },
   {
     id: 'channel-details',
-    label: '3 · Channel Details',
+    label: '3 · Channel Details (intro)',
     seed: {
       currentStep: 3,
       businessInfo: HAPPY_PATH.businessInfo,
@@ -238,6 +238,7 @@ export const PREVIEW_VIEWS: PreviewView[] = [
     label: '3 · Social: link success',
     seed: {
       currentStep: 3,
+      channelIntroSeen: true,
       businessInfo: { gymName: 'Iron Peak Fitness', services: ['Group Classes'], icp: HAPPY_PATH.businessInfo!.icp, channels: ['instagram'] },
       socialInputs: {
         instagram: {
@@ -254,6 +255,7 @@ export const PREVIEW_VIEWS: PreviewView[] = [
     label: '3 · Social: manual',
     seed: {
       currentStep: 3,
+      channelIntroSeen: true,
       businessInfo: { gymName: 'Iron Peak Fitness', services: ['Group Classes'], icp: HAPPY_PATH.businessInfo!.icp, channels: ['instagram'] },
       socialInputs: {
         instagram: {
@@ -270,6 +272,7 @@ export const PREVIEW_VIEWS: PreviewView[] = [
     label: '3 · Social: blocked',
     seed: {
       currentStep: 3,
+      channelIntroSeen: true,
       businessInfo: { gymName: 'Iron Peak Fitness', services: ['Group Classes'], icp: HAPPY_PATH.businessInfo!.icp, channels: ['instagram'] },
       socialInputs: {
         instagram: {
