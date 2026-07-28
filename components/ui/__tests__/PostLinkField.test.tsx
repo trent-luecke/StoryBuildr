@@ -101,3 +101,15 @@ it('ignores a stale response when a newer check supersedes it', async () => {
   expect(screen.queryByText(/access this post/i)).toBeNull()
   jest.useRealTimers()
 })
+
+it('uses a provided placeholder when passed', () => {
+  render(
+    <PostLinkField
+      platformLabel="Instagram"
+      placeholder="https://instagram.com/p/..."
+      onResolved={() => {}}
+      onSwitchToManual={() => {}}
+    />
+  )
+  expect(screen.getByPlaceholderText('https://instagram.com/p/...')).toBeInTheDocument()
+})

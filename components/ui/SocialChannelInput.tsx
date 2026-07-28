@@ -23,9 +23,25 @@ const CHANNEL_LABELS: Partial<Record<Channel, string>> = {
   linkedin: 'LinkedIn',
 }
 
+const CHANNEL_EXAMPLE_URL: Partial<Record<Channel, string>> = {
+  instagram: 'https://instagram.com/p/...',
+  facebook: 'https://facebook.com/yourgym/posts/...',
+  linkedin: 'https://linkedin.com/posts/...',
+}
+
+const CHANNEL_MANUAL_EXAMPLE: Partial<Record<Channel, string>> = {
+  instagram:
+    "A Reel of a coach demoing proper squat form, shot on a phone; a carousel of a member's 12-week transformation with a caption about training 4×/week; a Monday-motivation quote in our brand colors.",
+  facebook:
+    'A photo album from our Saturday community workout with 20+ members tagged; a post promoting our 6-week challenge with a sign-up link; a shared 5-star member review with a thank-you.',
+  linkedin:
+    "A post celebrating a coach's certification; a short thread on why strength training matters for desk workers; a client win with a photo and a tag.",
+}
+
 interface SocialChannelInputProps {
   channel: Channel
   value?: SocialInput
+  hideHeader?: boolean
   onChange: (input: SocialInput) => void
 }
 
@@ -36,7 +52,7 @@ const pill = (active: boolean) =>
       : 'border-gray-200 bg-white text-[#444444] hover:border-[#81A1D3]'
   }`
 
-export function SocialChannelInput({ channel, value, onChange }: SocialChannelInputProps) {
+export function SocialChannelInput({ channel, value, hideHeader = false, onChange }: SocialChannelInputProps) {
   const { previewMode } = useWizard()
   const label = CHANNEL_LABELS[channel] ?? channel
   const [method, setMethod] = useState<'links' | 'manual' | undefined>(value?.method)
@@ -94,10 +110,14 @@ export function SocialChannelInput({ channel, value, onChange }: SocialChannelIn
 
   return (
     <div>
-      <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1.5">
-        {label}
-      </label>
-      <p className="text-sm text-[#444444] mb-2">How would you like to share your {label}?</p>
+      {!hideHeader && (
+        <>
+          <label className="block text-xs font-bold text-[#1E212E] uppercase tracking-wide mb-1.5">
+            {label}
+          </label>
+          <p className="text-sm text-[#444444] mb-2">How would you like to share your {label}?</p>
+        </>
+      )}
 
       <div className="flex gap-2 mb-3">
         <button type="button" onClick={() => chooseMethod('links')} className={pill(method === 'links')}>
@@ -115,6 +135,7 @@ export function SocialChannelInput({ channel, value, onChange }: SocialChannelIn
             <PostLinkField
               key={i}
               platformLabel={label}
+              placeholder={CHANNEL_EXAMPLE_URL[channel]}
               previewMode={previewMode}
               initialPost={posts[i] ?? undefined}
               onResolved={(post) => setPostAt(i, post)}
@@ -176,8 +197,14 @@ export function SocialChannelInput({ channel, value, onChange }: SocialChannelIn
               onChange={(e) => updateManual({ recentPosts: e.target.value })}
               rows={3}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#444444] resize-none focus:outline-none focus:border-[#81A1D3]"
-              placeholder="e.g. Before/after transformation photo for a member, a class schedule graphic, a motivational quote..."
+              placeholder="Describe them here…"
             />
+            {CHANNEL_MANUAL_EXAMPLE[channel] && (
+              <p className="mt-2 text-xs text-[#444444]/70 leading-relaxed">
+                <span className="font-bold text-[#444444]">Example:</span>{' '}
+                {CHANNEL_MANUAL_EXAMPLE[channel]}
+              </p>
+            )}
           </div>
         </div>
       )}
