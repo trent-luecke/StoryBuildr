@@ -9,6 +9,7 @@ export interface PreviewView {
 // One happy-path gym, reused to derive every view's seed.
 export const HAPPY_PATH: WizardState = {
   currentStep: 7,
+  channelIntroSeen: true,
   businessInfo: {
     gymName: 'Iron Peak Fitness',
     services: ['Group Classes', 'Personal Training', 'Open Gym'],

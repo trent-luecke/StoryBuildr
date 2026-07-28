@@ -79,6 +79,7 @@ export interface StoryPlan {
 
 export interface WizardState {
   currentStep: WizardStep
+  channelIntroSeen: boolean
   businessInfo: BusinessInfo | null
   channelDetails: ChannelDetailsData | null
   preflightResults: Partial<Record<Channel, PreflightStatus>> | null
@@ -97,3 +98,4 @@ export type WizardAction =
   | { type: 'SET_AUDIT_RESULTS'; data: AuditResult[] }
   | { type: 'SET_STORY_MINE_ANSWER'; questionIndex: number; answer: string }
   | { type: 'SET_STORY_PLAN'; data: StoryPlan }
+  | { type: 'MARK_CHANNEL_INTRO_SEEN' }
