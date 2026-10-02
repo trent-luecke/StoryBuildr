@@ -1,7 +1,7 @@
 'use client'
 
 import { WizardProvider, useWizard } from '@/hooks/useWizard'
-import { WizardSidebar } from './WizardSidebar'
+import { WizardSidebar, WizardMobileHeader } from './WizardSidebar'
 import { StepWelcome } from '@/components/steps/StepWelcome'
 import { StepBusinessInfo } from '@/components/steps/StepBusinessInfo'
 import { StepChannelDetails } from '@/components/steps/StepChannelDetails'
@@ -24,7 +24,8 @@ export function WizardContent() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <WizardMobileHeader currentStep={state.currentStep} />
       <WizardSidebar currentStep={state.currentStep} />
       <main className="flex-1 min-w-0 bg-slate-50 overflow-x-clip flex justify-center items-start">
         {steps[state.currentStep]}
