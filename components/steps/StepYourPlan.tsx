@@ -5,7 +5,12 @@ import { useWizard } from '@/hooks/useWizard'
 import { STEP_COLUMN } from '@/components/wizard/stepLayout'
 import { StoryCard } from '@/components/plan/StoryCard'
 import { PdfCallout } from '@/components/ui/PdfCallout'
+import { NextStepModal } from '@/components/next-step/NextStepModal'
+import { NextStepBanner } from '@/components/next-step/NextStepBanner'
+import { NEXT_STEP_DOWNLOAD_DELAY_MS, NEXT_STEP_FALLBACK_MS } from '@/lib/next-step'
 import { Story } from '@/lib/types'
+
+const PDF_ERROR = 'There was an issue generating your PDF. Please try clicking download again.'
 
 export function StepYourPlan() {
   const { state, dispatch, previewMode } = useWizard()
@@ -15,6 +20,10 @@ export function StepYourPlan() {
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
   const startedAttempt = useRef(-1)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  // Fallback timer runs only while armed: disarmed on download click, re-armed (restarted) on PDF failure
+  const [fallbackArmed, setFallbackArmed] = useState(true)
+  const downloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const activeChannels = state.businessInfo?.channels ?? []
 
@@ -89,8 +98,43 @@ export function StepYourPlan() {
     generate()
   }, [attempt]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const planReady = !loading && !error
+
+  // Fallback trigger: plan on screen for NEXT_STEP_FALLBACK_MS without a download click.
+  // Off in preview mode so it doesn't fire while clicking between preview views.
+  useEffect(() => {
+    if (previewMode || !planReady || !fallbackArmed || state.nextStepModal !== 'unseen') return
+    const t = setTimeout(
+      () => dispatch({ type: 'SET_NEXT_STEP_MODAL', value: 'open' }),
+      NEXT_STEP_FALLBACK_MS
+    )
+    return () => clearTimeout(t)
+  }, [previewMode, planReady, fallbackArmed, state.nextStepModal, dispatch])
+
+  useEffect(() => () => {
+    if (downloadTimer.current) clearTimeout(downloadTimer.current)
+  }, [])
+
   async function downloadPdf() {
+    setFallbackArmed(false)
+    setPdfError(null)
     setDownloading(true)
+    try {
+      await fetchAndSavePdf()
+      // Primary trigger: successful download (also live in the preview harness, unlike the fallback)
+      downloadTimer.current = setTimeout(
+        () => dispatch({ type: 'SET_NEXT_STEP_MODAL', value: 'open' }),
+        NEXT_STEP_DOWNLOAD_DELAY_MS
+      )
+    } catch {
+      setPdfError(PDF_ERROR)
+      setFallbackArmed(true)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  async function fetchAndSavePdf() {
     const res = await fetch('/api/pdf', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -101,6 +145,7 @@ export function StepYourPlan() {
         activeChannels,
       }),
     })
+    if (!res.ok) throw new Error(`PDF API returned ${res.status}`)
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -108,7 +153,6 @@ export function StepYourPlan() {
     a.download = 'storybuildr-report.pdf'
     a.click()
     URL.revokeObjectURL(url)
-    setDownloading(false)
   }
 
   if (loading) {
@@ -138,6 +182,7 @@ export function StepYourPlan() {
 
   return (
     <div className={STEP_COLUMN}>
+      {state.nextStepModal === 'closed' && <NextStepBanner />}
       <p className="text-xs font-bold text-[#81A1D3] tracking-widest uppercase mb-2">Your Content Plan</p>
       <h2 className="text-2xl font-extrabold text-[#1E212E] mb-1">30 days of stories, built from yours</h2>
       <p className="text-sm text-[#444444] mb-5">
@@ -163,6 +208,14 @@ export function StepYourPlan() {
       >
         {downloading ? 'Generating PDF…' : 'Download your full report →'}
       </button>
+      {pdfError && (
+        <p role="alert" className="text-xs text-red-600 text-center mt-2">{pdfError}</p>
+      )}
+
+      <NextStepModal
+        open={state.nextStepModal === 'open'}
+        onClose={() => dispatch({ type: 'SET_NEXT_STEP_MODAL', value: 'closed' })}
+      />
     </div>
   )
 }

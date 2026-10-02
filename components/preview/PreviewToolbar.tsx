@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { PREVIEW_VIEWS } from '@/lib/preview/mock-data'
 
 export function PreviewToolbar({
@@ -9,8 +10,24 @@ export function PreviewToolbar({
   activeId: string
   onSelect: (id: string) => void
 }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  // Publish the toolbar's height as --sticky-offset so sticky step content
+  // (e.g. NextStepBanner) parks below the toolbar instead of under it.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const root = document.documentElement
+    const ro = new ResizeObserver(() => root.style.setProperty('--sticky-offset', `${el.offsetHeight}px`))
+    ro.observe(el)
+    return () => {
+      ro.disconnect()
+      root.style.removeProperty('--sticky-offset')
+    }
+  }, [])
+
   return (
-    <div className="sticky top-0 z-50 bg-[#1E212E] border-b-2 border-[#81A1D3] px-4 py-2">
+    <div ref={ref} className="sticky top-0 z-50 bg-[#1E212E] border-b-2 border-[#81A1D3] px-4 py-2">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[#81A1D3] text-[11px] font-extrabold tracking-[1.5px] uppercase mr-2">
           Preview

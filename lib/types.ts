@@ -77,6 +77,9 @@ export interface StoryPlan {
   stories: Story[]
 }
 
+// 'unseen' → modal hasn't fired yet; 'open' → showing; 'closed' → dismissed, banner shows instead
+export type NextStepModalState = 'unseen' | 'open' | 'closed'
+
 export interface WizardState {
   currentStep: WizardStep
   channelIntroSeen: boolean
@@ -87,6 +90,7 @@ export interface WizardState {
   auditResults: AuditResult[] | null
   storyMineAnswers: Partial<Record<number, string>>
   storyPlan: StoryPlan | null
+  nextStepModal: NextStepModalState
 }
 
 export type WizardAction =
@@ -99,3 +103,4 @@ export type WizardAction =
   | { type: 'SET_STORY_MINE_ANSWER'; questionIndex: number; answer: string }
   | { type: 'SET_STORY_PLAN'; data: StoryPlan }
   | { type: 'MARK_CHANNEL_INTRO_SEEN' }
+  | { type: 'SET_NEXT_STEP_MODAL'; value: NextStepModalState }
