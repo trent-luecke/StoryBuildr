@@ -1,4 +1,24 @@
+import Image from 'next/image'
 import { WizardStep } from '@/lib/types'
+
+// White wordmark on transparent — built for the dark (#1E212E) nav surface
+function BrandLockup({ logoClassName }: { logoClassName: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Image
+        src="/teambuildr-os-logo.png"
+        alt="TeamBuildr OS"
+        width={4648}
+        height={520}
+        preload
+        className={`${logoClassName} h-auto`}
+      />
+      <span className="text-[#81A1D3] text-[11px] font-extrabold tracking-[1.5px] uppercase">
+        StoryBuildr
+      </span>
+    </div>
+  )
+}
 
 const STEPS: { step: WizardStep; label: string }[] = [
   { step: 1, label: 'Welcome' },
@@ -17,9 +37,9 @@ interface WizardSidebarProps {
 export function WizardSidebar({ currentStep }: WizardSidebarProps) {
   return (
     <aside className="hidden md:flex w-[180px] shrink-0 bg-[#1E212E] flex-col px-4 py-5">
-      <span className="text-[#81A1D3] text-[11px] font-extrabold tracking-[1.5px] uppercase mb-6">
-        StoryBuildr
-      </span>
+      <div className="mb-6">
+        <BrandLockup logoClassName="w-full" />
+      </div>
 
       <nav className="flex flex-col gap-3 flex-1">
         {STEPS.map(({ step, label }) => {
@@ -76,10 +96,8 @@ export function WizardMobileHeader({ currentStep }: WizardSidebarProps) {
   const label = STEPS.find((s) => s.step === currentStep)?.label
   return (
     <header className="md:hidden bg-[#1E212E] px-4 pt-3 pb-3">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[#81A1D3] text-[11px] font-extrabold tracking-[1.5px] uppercase">
-          StoryBuildr
-        </span>
+      <div className="flex items-end justify-between mb-2">
+        <BrandLockup logoClassName="w-[120px]" />
         <span className="text-[11px] text-white/70">
           Step {currentStep} of 7 · <span className="font-bold text-white">{label}</span>
         </span>
