@@ -1,7 +1,7 @@
 // Post-workflow funnel: after the user finishes, push them to the next marketing asset.
 
-// TODO: PLACEHOLDER — replace with the real internal landing page URL before shipping to main.
-export const NEXT_STEP_URL = 'https://example.com/storybuildr-next-step'
+// Member Booked Appointments landing page. UTM params pending from marketing (see docs/BACKLOG.md).
+export const NEXT_STEP_URL = 'https://www.teambuildr.com/os-features/member-booked-appointments'
 
 // Modal opens this long after a successful PDF download (lets the browser's download UI land first).
 export const NEXT_STEP_DOWNLOAD_DELAY_MS = 2000
