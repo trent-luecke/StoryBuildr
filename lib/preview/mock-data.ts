@@ -10,6 +10,7 @@ export interface PreviewView {
 export const HAPPY_PATH: WizardState = {
   currentStep: 7,
   channelIntroSeen: true,
+  nextStepModal: 'unseen',
   businessInfo: {
     gymName: 'Iron Peak Fitness',
     services: ['Group Classes', 'Personal Training', 'Open Gym'],
@@ -335,6 +336,30 @@ export const PREVIEW_VIEWS: PreviewView[] = [
       auditResults: HAPPY_PATH.auditResults,
       storyMineAnswers: HAPPY_PATH.storyMineAnswers,
       storyPlan: HAPPY_PATH.storyPlan,
+    },
+  },
+  {
+    id: 'plan-next-step-modal',
+    label: '7 · Your Plan (next-step modal)',
+    seed: {
+      currentStep: 7,
+      businessInfo: HAPPY_PATH.businessInfo,
+      auditResults: HAPPY_PATH.auditResults,
+      storyMineAnswers: HAPPY_PATH.storyMineAnswers,
+      storyPlan: HAPPY_PATH.storyPlan,
+      nextStepModal: 'open',
+    },
+  },
+  {
+    id: 'plan-next-step-banner',
+    label: '7 · Your Plan (modal closed → banner)',
+    seed: {
+      currentStep: 7,
+      businessInfo: HAPPY_PATH.businessInfo,
+      auditResults: HAPPY_PATH.auditResults,
+      storyMineAnswers: HAPPY_PATH.storyMineAnswers,
+      storyPlan: HAPPY_PATH.storyPlan,
+      nextStepModal: 'closed',
     },
   },
 ]

@@ -13,6 +13,7 @@ const initialState: WizardState = {
   auditResults: null,
   storyMineAnswers: {},
   storyPlan: null,
+  nextStepModal: 'unseen',
 }
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
@@ -41,6 +42,10 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
       return { ...state, storyPlan: action.data }
     case 'MARK_CHANNEL_INTRO_SEEN':
       return { ...state, channelIntroSeen: true }
+    case 'SET_NEXT_STEP_MODAL':
+      // Show-once: only an unseen modal can open (guards the download/fallback timer race)
+      if (action.value === 'open' && state.nextStepModal !== 'unseen') return state
+      return { ...state, nextStepModal: action.value }
     default:
       return state
   }
